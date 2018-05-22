@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """
-Utility to get the path to the build directory
-
-Main function here is get_build_dir
+Functions with the main logic needed to build the command to build the docs
 """
 
 from __future__ import print_function

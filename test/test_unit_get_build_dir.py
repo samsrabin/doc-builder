@@ -13,7 +13,7 @@ except ImportError:
     # For python3
     import unittest.mock as mock
 import os
-from doc_builder.build_dir import get_build_dir
+from doc_builder.build_commands import get_build_dir
 from doc_builder import sys_utils
 
 class TestGetBuildDir(unittest.TestCase):
