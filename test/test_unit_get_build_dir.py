@@ -76,14 +76,14 @@ class TestGetBuildDir(unittest.TestCase):
     def test_reporoot_no_version(self):
         """If given repo_root but no version, get version from git branch"""
         with mock.patch('doc_builder.sys_utils.git_current_branch') as mock_git_current_branch:
-            with mock.patch('doc_builder.sys_utils.dir_exists') as mock_dir_exists:
+            with mock.patch('os.path.isdir') as mock_isdir:
                 mock_git_current_branch.return_value = (True, 'release-v2.0')
-                mock_dir_exists.return_value = True
+                mock_isdir.return_value = True
                 build_dir = get_build_dir(build_dir=None,
                                           repo_root="/path/to/repo",
                                           version=None)
                 expected = os.path.join("/path/to/repo", "release-v2.0")
-                mock_dir_exists.assert_called_with(expected)
+                mock_isdir.assert_called_with(expected)
 
         self.assertEqual(expected, build_dir)
 
@@ -101,15 +101,15 @@ class TestGetBuildDir(unittest.TestCase):
         """If given repo_root but no version, with the expected
         directory not existing, should raise an exception."""
         with mock.patch('doc_builder.sys_utils.git_current_branch') as mock_git_current_branch:
-            with mock.patch('doc_builder.sys_utils.dir_exists') as mock_dir_exists:
+            with mock.patch('os.path.isdir') as mock_isdir:
                 mock_git_current_branch.return_value = (True, 'release-v2.0')
-                mock_dir_exists.return_value = False
+                mock_isdir.return_value = False
                 with self.assertRaises(RuntimeError):
                     build_dir = get_build_dir(build_dir=None,
                                               repo_root="/path/to/repo",
                                               version=None)
                 expected = os.path.join("/path/to/repo", "release-v2.0")
-                mock_dir_exists.assert_called_with(expected)
+                mock_isdir.assert_called_with(expected)
 
 
 if __name__ == '__main__':

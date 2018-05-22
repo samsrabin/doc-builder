@@ -45,7 +45,7 @@ def get_build_dir(build_dir=None, repo_root=None, version=None,
 
     build_dir = os.path.join(repo_root, intermediate_path, version)
     if not version_explicit:
-        if not sys_utils.dir_exists(build_dir):
+        if not os.path.isdir(build_dir):
             # FIXME(wjs, 2018-05-22) Improve this message
             raise RuntimeError("directory doesn't exist")
 

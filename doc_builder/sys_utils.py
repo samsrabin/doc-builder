@@ -4,6 +4,7 @@ Functions that wrap system calls, including calls to the OS, git, etc.
 """
 
 from __future__ import print_function
+import os
 
 # FIXME(wjs, 2018-05-22) Make this really work
 # FIXME(wjs, 2018-05-22) Add some unit tests:
@@ -22,13 +23,3 @@ def git_current_branch():
     branch_name = "release-v2.0"
     return branch_found, branch_name
 
-# FIXME(wjs, 2018-05-22) Make this really work
-# FIXME(wjs, 2018-05-22) Add some unit tests:
-# - dir exists
-# - path doesn't exist
-# - path exists, but is a file, not a directory
-def dir_exists(path):
-    """Returns True if the directory at the given path exists, False if
-    it doesn't exist or if it isn't a directory.
-    """
-    return True
