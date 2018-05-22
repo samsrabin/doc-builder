@@ -1,0 +1,6 @@
+Requirements for running the tests here:
+
+- pylint (pip install pylint)
+
+- If using python2: mock (pip install mock)
+
