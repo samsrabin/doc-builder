@@ -1,0 +1,6 @@
+# editor files
+*~
+*.bak
+
+# generated python files
+*.pyc
