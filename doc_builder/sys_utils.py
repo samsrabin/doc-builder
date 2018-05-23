@@ -16,16 +16,16 @@ def git_current_branch():
     also be false if we're not in a git repository.)
     """
     cmd = ['git', 'symbolic-ref', '--short', '-q', 'HEAD']
-    devnull = open(os.devnull, 'w')
-    try:
-        # Suppress stderr because we don't want to clutter output with
-        # git's message, e.g., if we're not in a git repository.
-        branch_name = subprocess.check_output(cmd, stderr=devnull)
-    except subprocess.CalledProcessError:
-        branch_found = False
-        branch_name = ''
-    else:
-        branch_found = True
-        branch_name = branch_name.strip()
+    with open(os.devnull, 'w') as devnull:
+        try:
+            # Suppress stderr because we don't want to clutter output with
+            # git's message, e.g., if we're not in a git repository.
+            branch_name = subprocess.check_output(cmd, stderr=devnull)
+        except subprocess.CalledProcessError:
+            branch_found = False
+            branch_name = ''
+        else:
+            branch_found = True
+            branch_name = branch_name.strip()
 
     return branch_found, branch_name
