@@ -1,10 +1,8 @@
 #!/usr/bin/env python
-"""
-Tests of git_current_branch
+"""Tests of git_current_branch
 
-In some sense, these are unit tests, but we call them system tests
-because they interact with the OS, and so are slower than typical unit
-tests.
+These are integration tests, since they interact with the OS and git,
+and so are slower than typical unit tests.
 """
 
 from __future__ import print_function
@@ -64,3 +62,6 @@ class TestGitCurrentBranch(unittest.TestCase):
         branch_found, branch_name = git_current_branch()
         self.assertFalse(branch_found)
         self.assertEqual('', branch_name)
+
+if __name__ == '__main__':
+    unittest.main()

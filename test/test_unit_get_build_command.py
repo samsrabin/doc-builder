@@ -22,3 +22,6 @@ class TestGetBuildCommand(unittest.TestCase):
         build_command = get_build_command(build_dir="/path/to/foo")
         expected = ["make", "BUILDDIR=/path/to/foo"]
         self.assertEqual(expected, build_command)
+
+if __name__ == '__main__':
+    unittest.main()
