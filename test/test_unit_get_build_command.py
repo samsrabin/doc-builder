@@ -14,5 +14,11 @@ class TestGetBuildCommand(unittest.TestCase):
         """Tests basic usage"""
         build_command = get_build_command(build_dir="/path/to/foo",
                                           build_args="-j 4 html")
-        expected = ["make", "BUILDDIR=/path/to/foo", "-j 4 html"]
+        expected = ["make", "BUILDDIR=/path/to/foo", "-j", "4", "html"]
+        self.assertEqual(expected, build_command)
+
+    def test_no_build_args(self):
+        """Tests with no extra build args"""
+        build_command = get_build_command(build_dir="/path/to/foo")
+        expected = ["make", "BUILDDIR=/path/to/foo"]
         self.assertEqual(expected, build_command)

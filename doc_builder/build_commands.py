@@ -44,8 +44,12 @@ def get_build_dir(build_dir=None, repo_root=None, version=None,
     build_dir = os.path.join(repo_root, intermediate_path, version)
     if not version_explicit:
         if not os.path.isdir(build_dir):
-            # FIXME(wjs, 2018-05-22) Improve this message
-            raise RuntimeError("directory doesn't exist")
+            message = """
+Directory {build_dir} doesn't exist yet.
+If this is where you really want to build the documentation, rerun adding the
+command-line argument '--doc-version {version}'""".format(build_dir=build_dir,
+                                                          version=version)
+            raise RuntimeError(message)
 
     return build_dir
 
@@ -57,5 +61,7 @@ def get_build_command(build_dir, build_args=""):
     - build_args: string giving any extra args to pass to the build command
     """
     builddir_arg = "BUILDDIR={}".format(build_dir)
-    build_command = ["make", builddir_arg, build_args]
+    build_args_list = build_args.split()
+    build_command = ["make", builddir_arg]
+    build_command.extend(build_args_list)
     return build_command
