@@ -3,7 +3,7 @@
 """Functions to assist with testing git repositories"""
 
 from __future__ import print_function
-from test_helpers import check_call_suppress_output
+from test.test_utils.test_helpers import check_call_suppress_output
 
 def make_git_repo():
     """Turn the current directory into an empty git repository"""

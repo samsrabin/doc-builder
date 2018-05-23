@@ -7,7 +7,7 @@ Implementation of the top-level logic for build_docs.
 from __future__ import print_function
 import subprocess
 import argparse
-from build_commands import get_build_dir, get_build_command
+from doc_builder.build_commands import get_build_dir, get_build_command
 
 def commandline_options(cmdline_args=None):
     """Process the command-line arguments.
