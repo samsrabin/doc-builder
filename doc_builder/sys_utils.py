@@ -20,7 +20,9 @@ def git_current_branch():
         try:
             # Suppress stderr because we don't want to clutter output with
             # git's message, e.g., if we're not in a git repository.
-            branch_name = subprocess.check_output(cmd, stderr=devnull)
+            branch_name = subprocess.check_output(cmd,
+                                                  stderr=devnull,
+                                                  universal_newlines=True)
         except subprocess.CalledProcessError:
             branch_found = False
             branch_name = ''

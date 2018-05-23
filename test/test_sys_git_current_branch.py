@@ -51,7 +51,7 @@ class TestGitCurrentBranch(unittest.TestCase):
         checkout_git_branch('foo')
         branch_found, branch_name = git_current_branch()
         self.assertTrue(branch_found)
-        self.assertEqual(b'foo', branch_name)
+        self.assertEqual('foo', branch_name)
 
     def test_not_on_branch(self):
         """If in a git repository but not on a branch, should return (False, '')"""
