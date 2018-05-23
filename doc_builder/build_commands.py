@@ -9,7 +9,7 @@ from doc_builder import sys_utils
 
 def get_build_dir(build_dir=None, repo_root=None, version=None,
                   intermediate_path=""):
-    """Return a string giving the path to the build directory
+    """Return a string giving the path to the build directory.
 
     If build_dir is specified, simply use that.
 
@@ -48,3 +48,14 @@ def get_build_dir(build_dir=None, repo_root=None, version=None,
             raise RuntimeError("directory doesn't exist")
 
     return build_dir
+
+def get_build_command(build_dir, build_args=""):
+    """Return a string giving the build command.
+
+    Args:
+    - build_dir: string giving path to directory in which we should build
+    - build_args: string giving any extra args to pass to the build command
+    """
+    builddir_arg = "BUILDDIR={}".format(build_dir)
+    build_command = ["make", builddir_arg, build_args]
+    return build_command
