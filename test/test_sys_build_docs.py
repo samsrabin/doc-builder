@@ -9,13 +9,15 @@ import unittest
 import tempfile
 import shutil
 import os
-from doc_builder import build_docs
 from test.test_utils.git_helpers import (make_git_repo,
                                          add_git_commit,
                                          checkout_git_branch)
+from doc_builder import build_docs
 
 class TestBuildDocs(unittest.TestCase):
     """High-level system tests of build_docs"""
+    # Allow long method names
+    # pylint: disable=invalid-name
 
     # ------------------------------------------------------------------------
     # Helper methods
@@ -34,7 +36,8 @@ class TestBuildDocs(unittest.TestCase):
         shutil.rmtree(self._sourcedir, ignore_errors=True)
         shutil.rmtree(self._build_reporoot, ignore_errors=True)
 
-    def write_makefile(self):
+    @staticmethod
+    def write_makefile():
         """Write a fake makefile in the current directory
 
         The 'html' target of this Makefile just results in the text
@@ -48,8 +51,8 @@ html:
 
         with open('Makefile', 'w') as makefile:
             makefile.write(makefile_contents)
-            
-    def assertFileContentsEqual(self, expected, filepath, msg=None):
+
+    def assert_file_contents_equal(self, expected, filepath, msg=None):
         """Asserts that the contents of the file given by 'filepath' are equal to
         the string given by 'expected'. 'msg' gives an optional message to be
         printed if the assertion fails."""
@@ -81,7 +84,7 @@ html:
                 "--intermediate-path", intermediate_path]
         build_docs.main(args)
 
-        self.assertFileContentsEqual(expected="hello world\n",
+        self.assert_file_contents_equal(expected="hello world\n",
                                      filepath=os.path.join(build_path, "testfile"))
 
 if __name__ == '__main__':

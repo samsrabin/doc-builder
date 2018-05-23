@@ -13,13 +13,14 @@ except ImportError:
     # For python3
     import unittest.mock as mock
 import os
-from doc_builder.build_commands import get_build_dir
-from doc_builder import sys_utils
 from test.test_utils.sys_utils_fake import make_fake_isdir
+from doc_builder.build_commands import get_build_dir
 
 class TestGetBuildDir(unittest.TestCase):
     """Test the get_build_dir function
     """
+    # Allow long method names
+    # pylint: disable=invalid-name
 
     def test_with_builddir(self):
         """If given a build_dir, should return that"""
@@ -64,7 +65,7 @@ class TestGetBuildDir(unittest.TestCase):
             # /path/to/repo exists; with version specified explicitly,
             # /path/to/repo/v1.0 doesn't need to exist
             mock_isdir.side_effect = make_fake_isdir(
-                dirs_exist = [path_to_repo])
+                dirs_exist=[path_to_repo])
             build_dir = get_build_dir(build_dir=None,
                                       repo_root=path_to_repo,
                                       version="v1.0")
@@ -79,8 +80,8 @@ class TestGetBuildDir(unittest.TestCase):
             # /path/to/repo/foo exists; with version specified
             # explicitly, /path/to/repo/foo/v1.0 doesn't need to exist
             mock_isdir.side_effect = make_fake_isdir(
-                dirs_exist = [path_to_repo,
-                              os.path.join(path_to_repo, intermediate_path)])
+                dirs_exist=[path_to_repo,
+                            os.path.join(path_to_repo, intermediate_path)])
             build_dir = get_build_dir(build_dir=None,
                                       repo_root=path_to_repo,
                                       version="v1.0",
@@ -96,7 +97,7 @@ class TestGetBuildDir(unittest.TestCase):
             path_to_repo = os.path.join("path", "to", "repo")
             # /path/to/repo exists, but no subdirectories exist
             mock_isdir.side_effect = make_fake_isdir(
-                dirs_exist = [path_to_repo])
+                dirs_exist=[path_to_repo])
             with self.assertRaises(RuntimeError):
                 _ = get_build_dir(build_dir=None,
                                   repo_root=path_to_repo,
@@ -111,7 +112,7 @@ class TestGetBuildDir(unittest.TestCase):
                 path_to_repo = os.path.join("path", "to", "repo")
                 expected = os.path.join(path_to_repo, "release-v2.0")
                 mock_isdir.side_effect = make_fake_isdir(
-                    dirs_exist = [path_to_repo, expected])
+                    dirs_exist=[path_to_repo, expected])
                 build_dir = get_build_dir(build_dir=None,
                                           repo_root=path_to_repo,
                                           version=None)
@@ -124,9 +125,9 @@ class TestGetBuildDir(unittest.TestCase):
         with mock.patch('doc_builder.sys_utils.git_current_branch') as mock_git_current_branch:
             mock_git_current_branch.return_value = (False, '')
             with self.assertRaises(RuntimeError):
-                build_dir = get_build_dir(build_dir=None,
-                                          repo_root="/path/to/repo",
-                                          version=None)
+                _ = get_build_dir(build_dir=None,
+                                  repo_root="/path/to/repo",
+                                  version=None)
 
     def test_reporoot_no_version_dir_not_exist(self):
         """If given repo_root but no version, with the expected
@@ -137,11 +138,11 @@ class TestGetBuildDir(unittest.TestCase):
                 path_to_repo = os.path.join("path", "to", "repo")
                 # /path/to/repo exists, but /path/to/repo/release-v2.0 does not
                 mock_isdir.side_effect = make_fake_isdir(
-                    dirs_exist = [path_to_repo])
+                    dirs_exist=[path_to_repo])
                 with self.assertRaises(RuntimeError):
-                    build_dir = get_build_dir(build_dir=None,
-                                              repo_root=path_to_repo,
-                                              version=None)
+                    _ = get_build_dir(build_dir=None,
+                                      repo_root=path_to_repo,
+                                      version=None)
 
 
 if __name__ == '__main__':

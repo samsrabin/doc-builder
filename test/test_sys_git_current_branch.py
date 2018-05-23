@@ -11,12 +11,12 @@ import unittest
 import tempfile
 import shutil
 import os
-from doc_builder.sys_utils import git_current_branch
 from test.test_utils.git_helpers import (make_git_repo,
                                          add_git_commit,
                                          checkout_git_branch,
                                          make_git_tag,
                                          checkout_git_ref)
+from doc_builder.sys_utils import git_current_branch
 
 class TestGitCurrentBranch(unittest.TestCase):
     """Test the git_current_branch function"""

@@ -41,8 +41,8 @@ You can also explicitly specify the destination build path, with:
 """
 
     parser = argparse.ArgumentParser(
-        description = description,
-        formatter_class = argparse.RawTextHelpFormatter)
+        description=description,
+        formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument("build_args", nargs="?", default="-j 4 html",
                         help="Arguments to the make command.\n"
@@ -57,7 +57,8 @@ You can also explicitly specify the destination build path, with:
                            help="Root directory of the repository holding documentation builds.")
 
     parser.add_argument("-v", "--doc-version", default=None,
-                        help="Version name to build, corresponding to a directory name under repo root.\n"
+                        help="Version name to build,\n"
+                        "corresponding to a directory name under repo root.\n"
                         "Not applicable if --build-dir is specified.")
 
     parser.add_argument("-i", "--intermediate-path", default="",
@@ -80,10 +81,10 @@ def main(cmdline_args=None):
     arguments. This is typically just used for testing.
     """
     opts = commandline_options(cmdline_args)
-    build_dir = get_build_dir(build_dir = opts.build_dir,
-                              repo_root = opts.repo_root,
-                              version = opts.doc_version,
-                              intermediate_path = opts.intermediate_path)
-    build_command = get_build_command(build_dir = build_dir,
-                                      build_args = opts.build_args)
-    run_build_command(build_command = build_command)
+    build_dir = get_build_dir(build_dir=opts.build_dir,
+                              repo_root=opts.repo_root,
+                              version=opts.doc_version,
+                              intermediate_path=opts.intermediate_path)
+    build_command = get_build_command(build_dir=build_dir,
+                                      build_args=opts.build_args)
+    run_build_command(build_command=build_command)
