@@ -23,8 +23,9 @@ The main purpose of this tool is to assist with building versioned
 documentation, where the documentation builds land in subdirectories
 named based on the source branch.
 
-This should be run from the directory that contains the Makefile for
-building the documentation.
+This tool should be put somewhere in your path. Then it should be run
+from the directory that contains the Makefile for building the
+documentation.
 
 Typical usage is:
 
