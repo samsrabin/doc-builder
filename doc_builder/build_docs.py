@@ -45,9 +45,9 @@ You can also explicitly specify the destination build path, with:
         description=description,
         formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("build_args", nargs="?", default="-j 4 html",
-                        help="Arguments to the make command.\n"
-                        "Default is '-j 4 html'")
+    parser.add_argument("build_target", nargs="?", default="html",
+                        help="Target for the make command.\n"
+                        "Default is 'html'.")
 
     dir_group = parser.add_mutually_exclusive_group(required=True)
 
@@ -65,6 +65,10 @@ You can also explicitly specify the destination build path, with:
     parser.add_argument("-i", "--intermediate-path", default="",
                         help="Intermediate path elements between repo root and version directory.\n"
                         "Not applicable if --build-dir is specified.")
+
+    parser.add_argument("--num-make-jobs", default=4,
+                        help="Number of parallel jobs to use for the make process.\n"
+                        "Default is 4.")
 
     options = parser.parse_args(cmdline_args)
     return options
@@ -87,5 +91,6 @@ def main(cmdline_args=None):
                               version=opts.doc_version,
                               intermediate_path=opts.intermediate_path)
     build_command = get_build_command(build_dir=build_dir,
-                                      build_args=opts.build_args)
+                                      build_target=opts.build_target,
+                                      num_make_jobs=opts.num_make_jobs)
     run_build_command(build_command=build_command)

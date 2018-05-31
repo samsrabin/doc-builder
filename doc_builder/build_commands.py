@@ -62,15 +62,14 @@ command-line argument '--doc-version {version}'""".format(build_dir=build_dir,
 
     return build_dir
 
-def get_build_command(build_dir, build_args=""):
+def get_build_command(build_dir, build_target, num_make_jobs):
     """Return a string giving the build command.
 
     Args:
     - build_dir: string giving path to directory in which we should build
-    - build_args: string giving any extra args to pass to the build command
+    - build_target: string: target for the make command (e.g., "html")
+    - num_make_jobs: int: number of parallel jobs
     """
     builddir_arg = "BUILDDIR={}".format(build_dir)
-    build_args_list = build_args.split()
-    build_command = ["make", builddir_arg]
-    build_command.extend(build_args_list)
+    build_command = ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
     return build_command
