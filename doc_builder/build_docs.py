@@ -57,10 +57,12 @@ You can also explicitly specify the destination build path, with:
     dir_group.add_argument("-r", "--repo-root", default=None,
                            help="Root directory of the repository holding documentation builds.")
 
-    parser.add_argument("-v", "--doc-version", default=None,
+    parser.add_argument("-v", "--doc-version", nargs='+', default=[None],
                         help="Version name to build,\n"
                         "corresponding to a directory name under repo root.\n"
-                        "Not applicable if --build-dir is specified.")
+                        "Not applicable if --build-dir is specified.\n"
+                        "Multiple versions can be specified, in which case a build\n"
+                        "will be done for each version (with the same source).")
 
     parser.add_argument("-i", "--intermediate-path", default="",
                         help="Intermediate path elements between repo root and version directory.\n"
@@ -90,18 +92,29 @@ def main(cmdline_args=None):
     """
     opts = commandline_options(cmdline_args)
 
-    build_dir = get_build_dir(build_dir=opts.build_dir,
-                              repo_root=opts.repo_root,
-                              version=opts.doc_version,
-                              intermediate_path=opts.intermediate_path)
+    # Note that we do a separate build for each version. This is
+    # inefficient (assuming that the desired end result is for the
+    # different versions to be identical), but was an easy-to-implement
+    # solution to add convenience for building multiple versions of
+    # documentation with short build times (i.e., rather than requiring
+    # you to rerun build_docs multiple times). If this
+    # multiple-versions-at-once option starts to be used a lot, we could
+    # reimplement it to build just one version then copy the builds to
+    # the other versions (if that gives the correct end result).
+    for version in opts.doc_version:
 
-    if opts.clean:
-        clean_command = get_build_command(build_dir=build_dir,
-                                          build_target="clean",
+        build_dir = get_build_dir(build_dir=opts.build_dir,
+                                  repo_root=opts.repo_root,
+                                  version=version,
+                                  intermediate_path=opts.intermediate_path)
+
+        if opts.clean:
+            clean_command = get_build_command(build_dir=build_dir,
+                                              build_target="clean",
+                                              num_make_jobs=opts.num_make_jobs)
+            run_build_command(build_command=clean_command)
+
+        build_command = get_build_command(build_dir=build_dir,
+                                          build_target=opts.build_target,
                                           num_make_jobs=opts.num_make_jobs)
-        run_build_command(build_command=clean_command)
-
-    build_command = get_build_command(build_dir=build_dir,
-                                      build_target=opts.build_target,
-                                      num_make_jobs=opts.num_make_jobs)
-    run_build_command(build_command=build_command)
+        run_build_command(build_command=build_command)

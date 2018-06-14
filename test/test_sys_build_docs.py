@@ -46,6 +46,7 @@ class TestBuildDocs(unittest.TestCase):
 
         makefile_contents = """
 html:
+\t@mkdir -p $(BUILDDIR)
 \t@echo "hello world" > $(BUILDDIR)/testfile
 """
 
@@ -85,7 +86,25 @@ html:
         build_docs.main(args)
 
         self.assert_file_contents_equal(expected="hello world\n",
-                                     filepath=os.path.join(build_path, "testfile"))
+                                        filepath=os.path.join(build_path, "testfile"))
+
+    def test_multiple_versions(self):
+        """Test with multiple versions being specified at once"""
+
+        self.write_makefile()
+        build_path1 = os.path.join(self._build_reporoot, "v1")
+        build_path2 = os.path.join(self._build_reporoot, "v2")
+        # Note that, since we're specifying the versions explicitly, we
+        # shouldn't need to make the v1 and v2 directories ahead of time.
+
+        args = ["--repo-root", self._build_reporoot,
+                "--doc-version", "v1", "v2"]
+        build_docs.main(args)
+
+        self.assert_file_contents_equal(expected="hello world\n",
+                                        filepath=os.path.join(build_path1, "testfile"))
+        self.assert_file_contents_equal(expected="hello world\n",
+                                        filepath=os.path.join(build_path2, "testfile"))
 
 if __name__ == '__main__':
     unittest.main()
