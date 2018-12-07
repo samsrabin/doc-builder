@@ -67,22 +67,20 @@ html:
     # Begin tests
     # ------------------------------------------------------------------------
 
-    def test_with_repo_root_and_intermediate_path(self):
-        """Test with repo-root and intermediate-path specified, but doc-version not specified
-        (so doc version needs to be determined via git commands)."""
+    def test_with_repo_root(self):
+        """Test with repo-root specified, but doc-version not specified (so doc version needs to
+        be determined via git commands).
+        """
 
         self.write_makefile()
         make_git_repo()
         add_git_commit()
         checkout_git_branch('foo_branch')
-        intermediate_path = os.path.join("intermediate1", "intermediate2")
         build_path = os.path.join(self._build_reporoot,
-                                  intermediate_path,
                                   "foo_branch")
         os.makedirs(build_path)
 
-        args = ["--repo-root", self._build_reporoot,
-                "--intermediate-path", intermediate_path]
+        args = ["--repo-root", self._build_reporoot]
         build_docs.main(args)
 
         self.assert_file_contents_equal(expected="hello world\n",

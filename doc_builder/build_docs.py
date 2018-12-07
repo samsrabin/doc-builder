@@ -29,11 +29,10 @@ documentation.
 
 Typical usage is:
 
-   ./build_docs -r /path/to/doc/build/repo [-v DOC_VERSION] [-i INTERMEDIATE_PATH]
+   ./build_docs -r /path/to/doc/build/repo [-v DOC_VERSION]
 
-   This will build the documentation in a subdirectory of the doc build
-   repo, where the subdirectory is built from INTERMEDIATE_PATH (if
-   given), and DOC_VERSION. If DOC_VERSION isn't given, it will be
+   This will build the documentation in a subdirectory of the doc build repo, where the
+   subdirectory is built from DOC_VERSION. If DOC_VERSION isn't given, it will be
    determined based on the git branch name in the doc source repository.
 
 You can also explicitly specify the destination build path, with:
@@ -55,7 +54,9 @@ You can also explicitly specify the destination build path, with:
                            help="Full path to the directory in which the doc build should go.")
 
     dir_group.add_argument("-r", "--repo-root", default=None,
-                           help="Root directory of the repository holding documentation builds.")
+                           help="Root directory of the repository holding documentation builds.\n"
+                           "(If there are other path elements between the true repo root and\n"
+                           "the version directory, those should be included in this path.)")
 
     parser.add_argument("-v", "--doc-version", nargs='+', default=[None],
                         help="Version name to build,\n"
@@ -63,10 +64,6 @@ You can also explicitly specify the destination build path, with:
                         "Not applicable if --build-dir is specified.\n"
                         "Multiple versions can be specified, in which case a build\n"
                         "will be done for each version (with the same source).")
-
-    parser.add_argument("-i", "--intermediate-path", default="",
-                        help="Intermediate path elements between repo root and version directory.\n"
-                        "Not applicable if --build-dir is specified.")
 
     parser.add_argument("-c", "--clean", action="store_true",
                         help="Before building, run 'make clean'.")
@@ -105,8 +102,7 @@ def main(cmdline_args=None):
 
         build_dir = get_build_dir(build_dir=opts.build_dir,
                                   repo_root=opts.repo_root,
-                                  version=version,
-                                  intermediate_path=opts.intermediate_path)
+                                  version=version)
 
         if opts.clean:
             clean_command = get_build_command(build_dir=build_dir,

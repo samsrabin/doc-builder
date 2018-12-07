@@ -43,14 +43,6 @@ class TestGetBuildDir(unittest.TestCase):
                               repo_root=None,
                               version="v1.0")
 
-    def test_builddir_and_intermediatepath(self):
-        """If given both build_dir and intermediate_path, should raise an exception"""
-        with self.assertRaises(RuntimeError):
-            _ = get_build_dir(build_dir="/path/to/foo",
-                              repo_root=None,
-                              version=None,
-                              intermediate_path="bar")
-
     def test_no_builddir_or_reporoot(self):
         """If given neither build_dir nor repo_root, should raise an exception"""
         with self.assertRaises(RuntimeError):
@@ -72,37 +64,20 @@ class TestGetBuildDir(unittest.TestCase):
         expected = os.path.join(path_to_repo, "v1.0")
         self.assertEqual(expected, build_dir)
 
-    def test_reporoot_and_version_and_intermediatepath(self):
-        """If given repo_root, version and intermediate_path, should return correct build_dir"""
+    def test_reporoot_and_version_dir_not_exist(self):
+        """If given repo_root and version, with repo_root not existing, should raise an
+        exception.
+        """
         with mock.patch('os.path.isdir') as mock_isdir:
-            path_to_repo = os.path.join("path", "to", "repo")
-            intermediate_path = "foo"
-            # /path/to/repo/foo exists; with version specified
-            # explicitly, /path/to/repo/foo/v1.0 doesn't need to exist
+            path_to_parent = os.path.join("path", "to", "parent")
+            path_to_repo = os.path.join(path_to_parent, "repo")
+            # /path/to/parent exists, but not /path/to/parent/repo
             mock_isdir.side_effect = make_fake_isdir(
-                dirs_exist=[path_to_repo,
-                            os.path.join(path_to_repo, intermediate_path)])
-            build_dir = get_build_dir(build_dir=None,
-                                      repo_root=path_to_repo,
-                                      version="v1.0",
-                                      intermediate_path=intermediate_path)
-        expected = os.path.join(path_to_repo, intermediate_path, "v1.0")
-        self.assertEqual(expected, build_dir)
-
-    def test_reporoot_and_version_and_intermediatepath_dir_not_exist(self):
-        """If given repo_root, version and intermediate_path, with
-        repo_root/intermediate_path not existing, should raise an
-        exception."""
-        with mock.patch('os.path.isdir') as mock_isdir:
-            path_to_repo = os.path.join("path", "to", "repo")
-            # /path/to/repo exists, but no subdirectories exist
-            mock_isdir.side_effect = make_fake_isdir(
-                dirs_exist=[path_to_repo])
+                dirs_exist=[path_to_parent])
             with self.assertRaises(RuntimeError):
                 _ = get_build_dir(build_dir=None,
                                   repo_root=path_to_repo,
-                                  version="v1.0",
-                                  intermediate_path="foo")
+                                  version="v1.0")
 
     def test_reporoot_no_version(self):
         """If given repo_root but no version, get version from git branch"""

@@ -10,12 +10,12 @@ documentation.
 
 Typical usage is:
 
-   `./build_docs -r /path/to/doc/build/repo [-v DOC_VERSION] [-i INTERMEDIATE_PATH]`
+   `./build_docs -r /path/to/doc/build/repo [-v DOC_VERSION]`
 
    This will build the documentation in a subdirectory of the doc build
-   repo, where the subdirectory is built from `INTERMEDIATE_PATH` (if
-   given), and `DOC_VERSION`. If `DOC_VERSION` isn't given, it will be
-   determined based on the git branch name in the doc source repository.
+   repo, where the subdirectory is built from `DOC_VERSION`. If
+   `DOC_VERSION` isn't given, it will be determined based on the git
+   branch name in the doc source repository.
 
 You can also explicitly specify the destination build path, with:
 

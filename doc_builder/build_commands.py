@@ -7,23 +7,22 @@ from __future__ import print_function
 import os
 from doc_builder import sys_utils
 
-def get_build_dir(build_dir=None, repo_root=None, version=None,
-                  intermediate_path=""):
+def get_build_dir(build_dir=None, repo_root=None, version=None):
     """Return a string giving the path to the build directory.
 
     If build_dir is specified, simply use that.
 
     Otherwise, repo_root must be given. If version is also given, then
     the build directory will be:
-        os.path.join(repo_root, intermediate_path, version).
+        os.path.join(repo_root, version).
     If version is not given, then determine version by getting the
     current git branch; then use the above path specification.
 
     Error-checking on directory existence:
     - If build_dir is given, then no error checking is done
-    - Otherwise, we ensure that repo_root/intermediate_path exists
+    - Otherwise, we ensure that repo_root exists
       - If version is not given, then we also ensure that
-        repo_root/intermediate_path/version exists, for the determined version.
+        repo_root/version exists, for the determined version.
     """
 
     if build_dir is not None:
@@ -31,8 +30,6 @@ def get_build_dir(build_dir=None, repo_root=None, version=None,
             raise RuntimeError("Cannot specify both build-dir and repo-root")
         if version is not None:
             raise RuntimeError("Cannot specify both build-dir and version")
-        if intermediate_path:
-            raise RuntimeError("Cannot specify both build-dir and intermediate-path")
         return build_dir
 
     if repo_root is None:
@@ -47,7 +44,7 @@ def get_build_dir(build_dir=None, repo_root=None, version=None,
     else:
         version_explicit = True
 
-    build_dir_no_version = os.path.join(repo_root, intermediate_path)
+    build_dir_no_version = repo_root
     if not os.path.isdir(build_dir_no_version):
         raise RuntimeError("Directory {} doesn't exist".format(build_dir_no_version))
     build_dir = os.path.join(build_dir_no_version, version)
