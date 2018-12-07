@@ -35,6 +35,9 @@ Typical usage is:
    subdirectory is built from DOC_VERSION. If DOC_VERSION isn't given, it will be
    determined based on the git branch name in the doc source repository.
 
+   In the above example, documentation will be built in:
+   /path/to/doc/build/repo/versions/DOC_VERSION
+
 You can also explicitly specify the destination build path, with:
 
    ./build_docs -b /path/to/doc/build/repo/some/subdirectory
@@ -56,7 +59,7 @@ You can also explicitly specify the destination build path, with:
     dir_group.add_argument("-r", "--repo-root", default=None,
                            help="Root directory of the repository holding documentation builds.\n"
                            "(If there are other path elements between the true repo root and\n"
-                           "the version directory, those should be included in this path.)")
+                           "the 'versions' directory, those should be included in this path.)")
 
     parser.add_argument("-v", "--doc-version", nargs='+', default=[None],
                         help="Version name to build,\n"

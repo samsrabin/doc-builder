@@ -17,6 +17,9 @@ Typical usage is:
    `DOC_VERSION` isn't given, it will be determined based on the git
    branch name in the doc source repository.
 
+   In the above example, documentation will be built in:
+   `/path/to/doc/build/repo/versions/DOC_VERSION`
+
 You can also explicitly specify the destination build path, with:
 
    `./build_docs -b /path/to/doc/build/repo/some/subdirectory`

@@ -29,6 +29,8 @@ class TestBuildDocs(unittest.TestCase):
         self._return_dir = os.getcwd()
         self._sourcedir = tempfile.mkdtemp()
         self._build_reporoot = tempfile.mkdtemp()
+        self._build_versions_dir = os.path.join(self._build_reporoot, "versions")
+        os.makedirs(self._build_versions_dir)
         os.chdir(self._sourcedir)
 
     def tearDown(self):
@@ -76,7 +78,7 @@ html:
         make_git_repo()
         add_git_commit()
         checkout_git_branch('foo_branch')
-        build_path = os.path.join(self._build_reporoot,
+        build_path = os.path.join(self._build_versions_dir,
                                   "foo_branch")
         os.makedirs(build_path)
 
@@ -90,8 +92,8 @@ html:
         """Test with multiple versions being specified at once"""
 
         self.write_makefile()
-        build_path1 = os.path.join(self._build_reporoot, "v1")
-        build_path2 = os.path.join(self._build_reporoot, "v2")
+        build_path1 = os.path.join(self._build_versions_dir, "v1")
+        build_path2 = os.path.join(self._build_versions_dir, "v2")
         # Note that, since we're specifying the versions explicitly, we
         # shouldn't need to make the v1 and v2 directories ahead of time.
 

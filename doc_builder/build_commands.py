@@ -14,15 +14,15 @@ def get_build_dir(build_dir=None, repo_root=None, version=None):
 
     Otherwise, repo_root must be given. If version is also given, then
     the build directory will be:
-        os.path.join(repo_root, version).
+        os.path.join(repo_root, "versions", version).
     If version is not given, then determine version by getting the
     current git branch; then use the above path specification.
 
     Error-checking on directory existence:
     - If build_dir is given, then no error checking is done
-    - Otherwise, we ensure that repo_root exists
+    - Otherwise, we ensure that repo_root/versions exists
       - If version is not given, then we also ensure that
-        repo_root/version exists, for the determined version.
+        repo_root/versions/version exists, for the determined version.
     """
 
     if build_dir is not None:
@@ -44,7 +44,7 @@ def get_build_dir(build_dir=None, repo_root=None, version=None):
     else:
         version_explicit = True
 
-    build_dir_no_version = repo_root
+    build_dir_no_version = os.path.join(repo_root, "versions")
     if not os.path.isdir(build_dir_no_version):
         raise RuntimeError("Directory {} doesn't exist".format(build_dir_no_version))
     build_dir = os.path.join(build_dir_no_version, version)
