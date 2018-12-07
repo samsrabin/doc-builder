@@ -11,7 +11,7 @@ try:
     import mock
 except ImportError:
     # For python3
-    import unittest.mock as mock
+    from unittest import mock
 import os
 from test.test_utils.sys_utils_fake import make_fake_isdir
 from doc_builder.build_commands import get_build_dir
