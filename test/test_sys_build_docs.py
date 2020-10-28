@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 High-level system tests of the whole build_docs
 """
-
-from __future__ import print_function
 
 import unittest
 import tempfile

@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-
 """
 Implementation of the top-level logic for build_docs.
 """
 
-from __future__ import print_function
 import subprocess
 import argparse
 from doc_builder.build_commands import get_build_dir, get_build_command

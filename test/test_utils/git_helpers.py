@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Functions to assist with testing git repositories"""
 
-from __future__ import print_function
 from test.test_utils.test_helpers import check_call_suppress_output
 
 def make_git_repo():

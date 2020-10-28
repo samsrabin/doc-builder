@@ -1,9 +1,7 @@
-#!/usr/bin/env python
 """
 Functions with the main logic needed to build the command to build the docs
 """
 
-from __future__ import print_function
 import os
 from doc_builder import sys_utils
 

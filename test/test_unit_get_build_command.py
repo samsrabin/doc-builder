@@ -1,9 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Unit test driver for get_build_command function
 """
 
-from __future__ import print_function
 import unittest
 from doc_builder.build_commands import get_build_command
 

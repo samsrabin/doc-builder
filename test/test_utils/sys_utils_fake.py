@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-
-"""Fake implementations of some system utilities
-"""
+"""Fake implementations of some system utilities"""
 
 def make_fake_isdir(dirs_exist):
     """Return a fake replacement for os.path.isdir, which returns true

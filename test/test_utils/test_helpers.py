@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """General-purpose functions to help with testing"""
 
 import os

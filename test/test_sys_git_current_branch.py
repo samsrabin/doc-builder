@@ -1,11 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Tests of git_current_branch
 
 These are integration tests, since they interact with the OS and git,
 and so are slower than typical unit tests.
 """
-
-from __future__ import print_function
 
 import unittest
 import tempfile

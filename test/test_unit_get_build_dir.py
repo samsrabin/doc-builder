@@ -1,9 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Unit test driver for get_build_dir function
 """
-
-from __future__ import print_function
 
 import unittest
 try:

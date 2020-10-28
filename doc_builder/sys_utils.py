@@ -1,9 +1,7 @@
-#!/usr/bin/env python
 """
 Functions that wrap system calls, including calls to the OS, git, etc.
 """
 
-from __future__ import print_function
 import subprocess
 import os
 
