@@ -32,7 +32,8 @@ class TestGetBuildCommand(unittest.TestCase):
                     "--workdir", "/home/user/foocode/doc",
                     "--rm",
                     "escomp/base",
-                    "make", "BUILDDIR=/path/to/foorepos/foodocs/versions/main", "-j", "4", "html"]
+                    "/bin/bash", "-c",
+                    "make BUILDDIR=/path/to/foorepos/foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
     def test_docker_relpath(self):
@@ -48,7 +49,8 @@ class TestGetBuildCommand(unittest.TestCase):
                     "--workdir", "/home/user/foocode/doc",
                     "--rm",
                     "escomp/base",
-                    "make", "BUILDDIR=../../foodocs/versions/main", "-j", "4", "html"]
+                    "/bin/bash", "-c",
+                    "make BUILDDIR=../../foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
 if __name__ == '__main__':

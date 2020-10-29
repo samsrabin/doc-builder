@@ -79,20 +79,23 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     builddir_arg = "BUILDDIR={}".format(build_dir)
     build_command = ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
 
-    if docker_name is not None:
-        if os.path.isabs(build_dir):
-            build_dir_abs = build_dir
-        else:
-            build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
-        # mount the Docker image in a directory that is a parent of both build_dir and run_from_dir
-        docker_mountpoint = os.path.commonpath([build_dir_abs, run_from_dir])
-        docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_ROOT, 1)
-        docker_command = ["docker", "run",
-                          "--name", docker_name,
-                          "--volume", "{}:{}".format(docker_mountpoint, _DOCKER_ROOT),
-                          "--workdir", docker_workdir,
-                          "--rm",
-                          _DOCKER_IMAGE]
-        build_command = docker_command + build_command
+    if docker_name is None:
+        return build_command
 
-    return build_command
+    # But if we're using Docker, we have more work to do to create the command....
+
+    if os.path.isabs(build_dir):
+        build_dir_abs = build_dir
+    else:
+        build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
+    # mount the Docker image in a directory that is a parent of both build_dir and run_from_dir
+    docker_mountpoint = os.path.commonpath([build_dir_abs, run_from_dir])
+    docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_ROOT, 1)
+    docker_command = ["docker", "run",
+                      "--name", docker_name,
+                      "--volume", "{}:{}".format(docker_mountpoint, _DOCKER_ROOT),
+                      "--workdir", docker_workdir,
+                      "--rm",
+                      _DOCKER_IMAGE,
+                      "/bin/bash", "-c", " ".join(build_command)]
+    return docker_command
