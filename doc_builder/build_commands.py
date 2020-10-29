@@ -8,8 +8,8 @@ from doc_builder import sys_utils
 # The Docker image used to build documentation via Docker
 _DOCKER_IMAGE = "escomp/base"
 
-# The top-level directory in the above docker image
-_DOCKER_ROOT = "/home/user"
+# The assumed location of the home directory in the above docker image
+_DOCKER_HOME = "/home/user"
 
 def get_build_dir(build_dir=None, repo_root=None, version=None):
     """Return a string giving the path to the build directory.
@@ -90,12 +90,30 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
         build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
     # mount the Docker image in a directory that is a parent of both build_dir and run_from_dir
     docker_mountpoint = os.path.commonpath([build_dir_abs, run_from_dir])
-    docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_ROOT, 1)
+    docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_HOME, 1)
+
+    # The need for the following is subtle: For CTSM, the documentation build invokes 'git
+    # lfs pull'. However, when doing the documentation build from a git worktree, the .git
+    # directory is replaced with a text file giving the absolute path to the parent git
+    # repository, e.g., 'gitdir: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5'. So when
+    # trying to execute a git command from within the Docker image, you get a message
+    # like, 'fatal: not a git repository: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5',
+    # because in Docker-land, this path doesn't exist. To work around this problem, we
+    # create a sym link in Docker's file system with the appropriate mapping. For example,
+    # if the local file system's mount-point is /path/to/foo, then we create a sym link at
+    # /path/to/foo in Docker's file system, pointing to the home directory in the Docker
+    # file system.
+    docker_symlink_command = "sudo mkdir -p {} && sudo ln -s {} {}".format(
+        os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
+
+    # This is the full command that we'll run via Docker
+    docker_run_command = docker_symlink_command + " && " + " ".join(build_command)
+
     docker_command = ["docker", "run",
                       "--name", docker_name,
-                      "--volume", "{}:{}".format(docker_mountpoint, _DOCKER_ROOT),
+                      "--volume", "{}:{}".format(docker_mountpoint, _DOCKER_HOME),
                       "--workdir", docker_workdir,
                       "--rm",
                       _DOCKER_IMAGE,
-                      "/bin/bash", "-c", " ".join(build_command)]
+                      "/bin/bash", "-c", docker_run_command]
     return docker_command

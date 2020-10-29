@@ -33,6 +33,8 @@ class TestGetBuildCommand(unittest.TestCase):
                     "--rm",
                     "escomp/base",
                     "/bin/bash", "-c",
+                    # Note that the following two lines are all one long string
+                    "sudo mkdir -p /path/to && sudo ln -s /home/user /path/to/foorepos && "
                     "make BUILDDIR=/path/to/foorepos/foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
@@ -50,6 +52,8 @@ class TestGetBuildCommand(unittest.TestCase):
                     "--rm",
                     "escomp/base",
                     "/bin/bash", "-c",
+                    # Note that the following two lines are all one long string
+                    "sudo mkdir -p /path/to && sudo ln -s /home/user /path/to/foorepos && "
                     "make BUILDDIR=../../foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
