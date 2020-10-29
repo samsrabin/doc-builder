@@ -5,6 +5,12 @@ Functions with the main logic needed to build the command to build the docs
 import os
 from doc_builder import sys_utils
 
+# The Docker image used to build documentation via Docker
+_DOCKER_IMAGE = "escomp/base"
+
+# The top-level directory in the above docker image
+_DOCKER_ROOT = "/home/user"
+
 def get_build_dir(build_dir=None, repo_root=None, version=None):
     """Return a string giving the path to the build directory.
 
@@ -57,14 +63,36 @@ command-line argument '--doc-version {version}'""".format(build_dir=build_dir,
 
     return build_dir
 
-def get_build_command(build_dir, build_target, num_make_jobs):
+def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, docker_name=None):
     """Return a string giving the build command.
 
     Args:
     - build_dir: string giving path to directory in which we should build
+        If this is a relative path, it is assumed to be relative to run_from_dir
+    - run_from_dir: string giving absolute path from which the build_docs command was run
+        This is needed when using Docker
     - build_target: string: target for the make command (e.g., "html")
     - num_make_jobs: int: number of parallel jobs
+    - docker_name: string or None: if not None, uses a Docker container to do the build,
+        with the given name
     """
     builddir_arg = "BUILDDIR={}".format(build_dir)
     build_command = ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
+
+    if docker_name is not None:
+        if os.path.isabs(build_dir):
+            build_dir_abs = build_dir
+        else:
+            build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
+        # mount the Docker image in a directory that is a parent of both build_dir and run_from_dir
+        docker_mountpoint = os.path.commonpath([build_dir_abs, run_from_dir])
+        docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_ROOT, 1)
+        docker_command = ["docker", "run",
+                          "--name", docker_name,
+                          "--volume", "{}:{}".format(docker_mountpoint, _DOCKER_ROOT),
+                          "--workdir", docker_workdir,
+                          "--rm",
+                          _DOCKER_IMAGE]
+        build_command = docker_command + build_command
+
     return build_command
