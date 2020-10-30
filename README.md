@@ -1,25 +1,34 @@
 This tool wraps the build command to build sphinx-based documentation.
 
-The main purpose of this tool is to assist with building versioned
-documentation, where the documentation builds land in subdirectories
-named based on the source branch.
+This tool assists with creating the correct documentation build commands
+in cases including:
+- Building the documentation from a Docker container
+- Building versioned documentation, where the documentation builds land
+  in subdirectories named based on the source branch
 
 This tool should be put somewhere in your path. Then it should be run
 from the directory that contains the Makefile for building the
 documentation.
 
-Typical usage is:
+Simple usage is:
 
-   `./build_docs -r /path/to/doc/build/repo [-v DOC_VERSION]`
+    build_docs -b /path/to/doc/build/repo/some/subdirectory [-c] [-d]
 
-   This will build the documentation in a subdirectory of the doc build
-   repo, where the subdirectory is built from `DOC_VERSION`. If
-   `DOC_VERSION` isn't given, it will be determined based on the git
-   branch name in the doc source repository.
+    Common additional flags are:
+    -c: Before building, run 'make clean'
+    -d: Use the escomp/base Docker container to build the documentation
 
-   In the above example, documentation will be built in:
-   `/path/to/doc/build/repo/versions/DOC_VERSION`
+Usage for automatically determining the subdirectory in which to build,
+based on the version indicated by the current branch, is:
 
-You can also explicitly specify the destination build path, with:
+    ./build_docs -r /path/to/doc/build/repo [-v DOC_VERSION]
 
-   `./build_docs -b /path/to/doc/build/repo/some/subdirectory`
+    This will build the documentation in a subdirectory of the doc build
+    repo, where the subdirectory is built from DOC_VERSION. If
+    DOC_VERSION isn't given, it will be determined based on the git
+    branch name in the doc source repository.
+
+    In the above example, documentation will be built in:
+    /path/to/doc/build/repo/versions/DOC_VERSION
+
+    This usage also accepts the optional arguments described above.

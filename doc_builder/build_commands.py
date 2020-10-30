@@ -6,7 +6,7 @@ import os
 from doc_builder import sys_utils
 
 # The Docker image used to build documentation via Docker
-_DOCKER_IMAGE = "escomp/base"
+DOCKER_IMAGE = "escomp/base"
 
 # The assumed location of the home directory in the above docker image
 _DOCKER_HOME = "/home/user"
@@ -115,6 +115,6 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
                       "--workdir", docker_workdir,
                       "-t",  # "-t" is needed for colorful output
                       "--rm",
-                      _DOCKER_IMAGE,
+                      DOCKER_IMAGE,
                       "/bin/bash", "-c", docker_run_command]
     return docker_command
