@@ -113,6 +113,7 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
                       "--name", docker_name,
                       "--volume", "{}:{}".format(docker_mountpoint, _DOCKER_HOME),
                       "--workdir", docker_workdir,
+                      "-t",  # "-t" is needed for colorful output
                       "--rm",
                       _DOCKER_IMAGE,
                       "/bin/bash", "-c", docker_run_command]
