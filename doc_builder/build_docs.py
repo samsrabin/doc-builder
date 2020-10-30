@@ -4,6 +4,11 @@ Implementation of the top-level logic for build_docs.
 
 import subprocess
 import argparse
+import os
+import random
+import string
+import sys
+import signal
 from doc_builder.build_commands import get_build_dir, get_build_command
 
 def commandline_options(cmdline_args=None):
@@ -68,6 +73,17 @@ You can also explicitly specify the destination build path, with:
     parser.add_argument("-c", "--clean", action="store_true",
                         help="Before building, run 'make clean'.")
 
+    parser.add_argument("-d", "--build-with-docker", action="store_true",
+                        help="Use the escomp/base Docker container to build the documentation,\n"
+                        "rather than relying on locally-installed versions of Sphinx, etc.\n"
+                        "\n"
+                        "IMPORTANT NOTE: The Docker image is mounted in a common parent directory\n"
+                        "of the build directory and the current working directory. Problems can\n"
+                        "arise if the Docker image is mounted in your home directory, so it is\n"
+                        "best if you arrange your directories so that the documentation source\n"
+                        "and documentation build directories are both contained within a\n"
+                        "subdirectory of your home directory.")
+
     parser.add_argument("--num-make-jobs", default=4,
                         help="Number of parallel jobs to use for the make process.\n"
                         "Default is 4.")
@@ -81,6 +97,27 @@ def run_build_command(build_command):
     print(build_command_str)
     subprocess.check_call(build_command)
 
+def setup_for_docker():
+    """Do some setup for running with docker
+
+    Returns a name that should be used in the docker run command
+    """
+
+    docker_name = 'build_docs_' + ''.join(random.choice(string.ascii_lowercase) for _ in range(8))
+
+    # It seems that, if we kill the build_docs process with Ctrl-C, the docker process
+    # continues. Handle that by implementing a signal handler. There may be a better /
+    # more pythonic way to handle this, but this should work.
+    def sigint_kill_docker(signum, frame):
+        """Signal handler: kill docker process before exiting"""
+        # pylint: disable=unused-argument
+        docker_kill_cmd = ["docker", "kill", docker_name]
+        subprocess.check_call(docker_kill_cmd)
+        sys.exit(1)
+    signal.signal(signal.SIGINT, sigint_kill_docker)
+
+    return docker_name
+
 def main(cmdline_args=None):
     """Top-level function implementing build_docs.
 
@@ -88,6 +125,15 @@ def main(cmdline_args=None):
     arguments. This is typically just used for testing.
     """
     opts = commandline_options(cmdline_args)
+
+    if opts.build_with_docker:
+        # We potentially reuse the same docker name for multiple docker processes: the
+        # clean and the actual build. However, since a given process should end before the
+        # next one begins, and because we use '--rm' in the docker run command, this
+        # should be okay.
+        docker_name = setup_for_docker()
+    else:
+        docker_name = None
 
     # Note that we do a separate build for each version. This is
     # inefficient (assuming that the desired end result is for the
@@ -106,11 +152,15 @@ def main(cmdline_args=None):
 
         if opts.clean:
             clean_command = get_build_command(build_dir=build_dir,
+                                              run_from_dir=os.getcwd(),
                                               build_target="clean",
-                                              num_make_jobs=opts.num_make_jobs)
+                                              num_make_jobs=opts.num_make_jobs,
+                                              docker_name=docker_name)
             run_build_command(build_command=clean_command)
 
         build_command = get_build_command(build_dir=build_dir,
+                                          run_from_dir=os.getcwd(),
                                           build_target=opts.build_target,
-                                          num_make_jobs=opts.num_make_jobs)
+                                          num_make_jobs=opts.num_make_jobs,
+                                          docker_name=docker_name)
         run_build_command(build_command=build_command)
