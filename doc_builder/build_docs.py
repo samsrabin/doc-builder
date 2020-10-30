@@ -59,10 +59,6 @@ based on the version indicated by the current branch, is:
         description=description,
         formatter_class=argparse.RawTextHelpFormatter)
 
-    parser.add_argument("build_target", nargs="?", default="html",
-                        help="Target for the make command.\n"
-                        "Default is 'html'.")
-
     dir_group = parser.add_mutually_exclusive_group(required=True)
 
     dir_group.add_argument("-b", "--build-dir", default=None,
@@ -95,6 +91,10 @@ based on the version indicated by the current branch, is:
                         "and documentation build directories are both contained within a\n"
                         "subdirectory of your home directory.".format(
                             docker_image=DOCKER_IMAGE))
+
+    parser.add_argument("-t", "--build-target", default="html",
+                        help="Target for the make command.\n"
+                        "Default is 'html'.")
 
     parser.add_argument("--num-make-jobs", default=4,
                         help="Number of parallel jobs to use for the make process.\n"
