@@ -92,17 +92,28 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     docker_mountpoint = os.path.commonpath([build_dir_abs, run_from_dir])
     docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_HOME, 1)
 
-    # The need for the following is subtle: For CTSM, the documentation build invokes 'git
-    # lfs pull'. However, when doing the documentation build from a git worktree, the .git
-    # directory is replaced with a text file giving the absolute path to the parent git
-    # repository, e.g., 'gitdir: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5'. So when
-    # trying to execute a git command from within the Docker image, you get a message
-    # like, 'fatal: not a git repository: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5',
-    # because in Docker-land, this path doesn't exist. To work around this problem, we
-    # create a sym link in Docker's file system with the appropriate mapping. For example,
-    # if the local file system's mount-point is /path/to/foo, then we create a sym link at
-    # /path/to/foo in Docker's file system, pointing to the home directory in the Docker
-    # file system.
+    # We need to create a symlink for two reasons:
+    #
+    # (1) If the build_dir is an absolute rather than relative path, this path won't exist
+    #     in Docker's file system
+    #
+    # (2) For CTSM, the documentation build invokes 'git lfs pull'. However, when doing
+    #     the documentation build from a git worktree, the .git directory is replaced with
+    #     a text file giving the absolute path to the parent git repository, e.g.,
+    #     'gitdir: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5'. So when trying to
+    #     execute a git command from within the Docker image, you get a message like,
+    #     'fatal: not a git repository: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5',
+    #     because in Docker-land, this path doesn't exist.
+    #
+    # To work around these problems, we create a sym link in Docker's file system with the
+    # appropriate mapping. For example, if the local file system's mount-point is
+    # /path/to/foo, then we create a sym link at /path/to/foo in Docker's file system,
+    # pointing to the home directory in the Docker file system.
+    #
+    # However, note that this creation of a symlink could cause its own problems if it
+    # happens that the path given by docker_mountpoint already exists in Docker's file
+    # system. (This seems unlikely to happen, so we don't bother trying to trap for it
+    # here.)
     docker_symlink_command = "sudo mkdir -p {} && sudo ln -s {} {}".format(
         os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
 

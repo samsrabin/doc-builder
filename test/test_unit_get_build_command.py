@@ -21,41 +21,43 @@ class TestGetBuildCommand(unittest.TestCase):
 
     def test_docker(self):
         """Tests usage with use_docker=True"""
-        build_command = get_build_command(build_dir="/path/to/foorepos/foodocs/versions/main",
-                                          run_from_dir="/path/to/foorepos/foocode/doc",
+        build_command = get_build_command(build_dir="/path/to/username/foorepos/foodocs/versions/main", # pylint:disable=line-too-long
+                                          run_from_dir="/path/to/username/foorepos/foocode/doc",
                                           build_target="html",
                                           num_make_jobs=4,
                                           docker_name='foo')
         expected = ["docker", "run",
                     "--name", "foo",
-                    "--volume", "/path/to/foorepos:/home/user",
+                    "--volume", "/path/to/username/foorepos:/home/user",
                     "--workdir", "/home/user/foocode/doc",
                     "-t",
                     "--rm",
                     "escomp/base",
                     "/bin/bash", "-c",
-                    # Note that the following two lines are all one long string
-                    "sudo mkdir -p /path/to && sudo ln -s /home/user /path/to/foorepos && "
-                    "make BUILDDIR=/path/to/foorepos/foodocs/versions/main -j 4 html"]
+                    # Note that the following three lines are all one long string
+                    "sudo mkdir -p /path/to/username && "
+                    "sudo ln -s /home/user /path/to/username/foorepos && "
+                    "make BUILDDIR=/path/to/username/foorepos/foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
     def test_docker_relpath(self):
         """Tests usage with use_docker=True, with a relative path to build_dir"""
         build_command = get_build_command(build_dir="../../foodocs/versions/main",
-                                          run_from_dir="/path/to/foorepos/foocode/doc",
+                                          run_from_dir="/path/to/username/foorepos/foocode/doc",
                                           build_target="html",
                                           num_make_jobs=4,
                                           docker_name='foo')
         expected = ["docker", "run",
                     "--name", "foo",
-                    "--volume", "/path/to/foorepos:/home/user",
+                    "--volume", "/path/to/username/foorepos:/home/user",
                     "--workdir", "/home/user/foocode/doc",
                     "-t",
                     "--rm",
                     "escomp/base",
                     "/bin/bash", "-c",
-                    # Note that the following two lines are all one long string
-                    "sudo mkdir -p /path/to && sudo ln -s /home/user /path/to/foorepos && "
+                    # Note that the following three lines are all one long string
+                    "sudo mkdir -p /path/to/username && "
+                    "sudo ln -s /home/user /path/to/username/foorepos && "
                     "make BUILDDIR=../../foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
