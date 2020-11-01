@@ -3,13 +3,14 @@ Functions with the main logic needed to build the command to build the docs
 """
 
 import os
+import pathlib
 from doc_builder import sys_utils
 
 # The Docker image used to build documentation via Docker
 DOCKER_IMAGE = "escomp/base"
 
-# The assumed location of the home directory in the above docker image
-_DOCKER_HOME = "/home/user"
+# The path in Docker's filesystem where the user's home directory is mounted
+_DOCKER_HOME = "/home/user/mounted_home"
 
 def get_build_dir(build_dir=None, repo_root=None, version=None):
     """Return a string giving the path to the build directory.
@@ -76,6 +77,8 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     - docker_name: string or None: if not None, uses a Docker container to do the build,
         with the given name
     """
+    # pylint: disable=too-many-locals
+
     builddir_arg = "BUILDDIR={}".format(build_dir)
     build_command = ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
 
@@ -84,13 +87,35 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
 
     # But if we're using Docker, we have more work to do to create the command....
 
+    # Mount the user's home directory in the Docker image; this assumes that both
+    # run_from_dir and build_dir reside somewhere under the user's home directory (we
+    # check this assumption below).
+    docker_mountpoint = os.path.expanduser('~')
+
+    run_from_dir_path = pathlib.Path(run_from_dir)
+    try:
+        run_from_dir_relpath = run_from_dir_path.relative_to(docker_mountpoint)
+    except ValueError:
+        raise RuntimeError("build_docs must be run from somewhere within your home directory")
+
     if os.path.isabs(build_dir):
         build_dir_abs = build_dir
     else:
         build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
-    # mount the Docker image in a directory that is a parent of both build_dir and run_from_dir
-    docker_mountpoint = os.path.commonpath([build_dir_abs, run_from_dir])
-    docker_workdir = run_from_dir.replace(docker_mountpoint, _DOCKER_HOME, 1)
+    build_dir_path = pathlib.Path(build_dir_abs)
+    try:
+        _ = build_dir_path.relative_to(docker_mountpoint)
+    except ValueError:
+        raise RuntimeError("build directory must reside under your home directory")
+
+    # I think we need to do this conversion to a PosixPath for the sake of Windows
+    # machines, where run_from_dir_relpath is a WindowsPath but we want a Posix path for
+    # Docker. (But it may be that this is unnecessary.)
+    run_from_dir_relpath_posix = pathlib.PurePosixPath(run_from_dir_relpath)
+    # In the following, we deliberately hard-code "/" rather than using something like
+    # os.path.join, because we need a path that works in Docker's file system, not the
+    # native file system (in case the native file system is Windows).
+    docker_workdir = _DOCKER_HOME + "/" + str(run_from_dir_relpath_posix)
 
     # We need to create a symlink for two reasons:
     #

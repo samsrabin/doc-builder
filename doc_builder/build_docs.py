@@ -84,12 +84,10 @@ based on the version indicated by the current branch, is:
                         "rather than relying on locally-installed versions of Sphinx, etc.\n"
                         "This assumes that Docker is installed and running on your system.\n"
                         "\n"
-                        "IMPORTANT NOTE: The Docker image is mounted in a common parent directory\n"
-                        "of the build directory and the current working directory. Problems can\n"
-                        "arise if the Docker image is mounted in your home directory, so it is\n"
-                        "best if you arrange your directories so that the documentation source\n"
-                        "and documentation build directories are both contained within a\n"
-                        "subdirectory of your home directory.".format(
+                        "NOTE: This mounts your home directory in the Docker image.\n"
+                        "Therefore, both the current directory (containing the Makefile for\n"
+                        "building the documentation) and the documentation build directory\n"
+                        "must reside somewhere within your home directory.".format(
                             docker_image=DOCKER_IMAGE))
 
     parser.add_argument("-t", "--build-target", default="html",

@@ -4,7 +4,12 @@
 """
 
 import unittest
+from unittest.mock import patch
 from doc_builder.build_commands import get_build_command
+
+# Allow names that pylint doesn't like, because otherwise I find it hard
+# to make readable unit test names
+# pylint: disable=invalid-name
 
 class TestGetBuildCommand(unittest.TestCase):
     """Test the get_build_command function"""
@@ -19,8 +24,10 @@ class TestGetBuildCommand(unittest.TestCase):
         expected = ["make", "BUILDDIR=/path/to/foo", "-j", "4", "html"]
         self.assertEqual(expected, build_command)
 
-    def test_docker(self):
+    @patch('os.path.expanduser')
+    def test_docker(self, mock_expanduser):
         """Tests usage with use_docker=True"""
+        mock_expanduser.return_value = "/path/to/username"
         build_command = get_build_command(build_dir="/path/to/username/foorepos/foodocs/versions/main", # pylint:disable=line-too-long
                                           run_from_dir="/path/to/username/foorepos/foocode/doc",
                                           build_target="html",
@@ -28,20 +35,22 @@ class TestGetBuildCommand(unittest.TestCase):
                                           docker_name='foo')
         expected = ["docker", "run",
                     "--name", "foo",
-                    "--volume", "/path/to/username/foorepos:/home/user",
-                    "--workdir", "/home/user/foocode/doc",
+                    "--volume", "/path/to/username:/home/user/mounted_home",
+                    "--workdir", "/home/user/mounted_home/foorepos/foocode/doc",
                     "-t",
                     "--rm",
                     "escomp/base",
                     "/bin/bash", "-c",
                     # Note that the following three lines are all one long string
-                    "sudo mkdir -p /path/to/username && "
-                    "sudo ln -s /home/user /path/to/username/foorepos && "
+                    "sudo mkdir -p /path/to && "
+                    "sudo ln -s /home/user/mounted_home /path/to/username && "
                     "make BUILDDIR=/path/to/username/foorepos/foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
-    def test_docker_relpath(self):
+    @patch('os.path.expanduser')
+    def test_docker_relpath(self, mock_expanduser):
         """Tests usage with use_docker=True, with a relative path to build_dir"""
+        mock_expanduser.return_value = "/path/to/username"
         build_command = get_build_command(build_dir="../../foodocs/versions/main",
                                           run_from_dir="/path/to/username/foorepos/foocode/doc",
                                           build_target="html",
@@ -49,17 +58,44 @@ class TestGetBuildCommand(unittest.TestCase):
                                           docker_name='foo')
         expected = ["docker", "run",
                     "--name", "foo",
-                    "--volume", "/path/to/username/foorepos:/home/user",
-                    "--workdir", "/home/user/foocode/doc",
+                    "--volume", "/path/to/username:/home/user/mounted_home",
+                    "--workdir", "/home/user/mounted_home/foorepos/foocode/doc",
                     "-t",
                     "--rm",
                     "escomp/base",
                     "/bin/bash", "-c",
                     # Note that the following three lines are all one long string
-                    "sudo mkdir -p /path/to/username && "
-                    "sudo ln -s /home/user /path/to/username/foorepos && "
+                    "sudo mkdir -p /path/to && "
+                    "sudo ln -s /home/user/mounted_home /path/to/username && "
                     "make BUILDDIR=../../foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
+
+    @patch('os.path.expanduser')
+    def test_docker_builddir_not_in_home(self, mock_expanduser):
+        """If build_dir is not in the user's home directory, should raise an exception"""
+        mock_expanduser.return_value = "/path/to/username"
+        with self.assertRaisesRegex(
+                RuntimeError,
+                "build directory must reside under your home directory"):
+            _ = get_build_command(build_dir="/path/to/other/foorepos/foodocs/versions/main",
+                                  run_from_dir="/path/to/username/foorepos/foocode/doc",
+                                  build_target="html",
+                                  num_make_jobs=4,
+                                  docker_name='foo')
+
+    @patch('os.path.expanduser')
+    def test_docker_runfromdir_not_in_home(self, mock_expanduser):
+        """If run_from_dir is not in the user's home directory, should raise an exception"""
+        mock_expanduser.return_value = "/path/to/username"
+        with self.assertRaisesRegex(
+                RuntimeError,
+                "build_docs must be run from somewhere within your home directory"):
+            _ = get_build_command(build_dir="/path/to/username/foorepos/foodocs/versions/main",
+                                  run_from_dir="/path/to/other/foorepos/foocode/doc",
+                                  build_target="html",
+                                  num_make_jobs=4,
+                                  docker_name='foo')
+
 
 if __name__ == '__main__':
     unittest.main()
