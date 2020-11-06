@@ -33,11 +33,12 @@ documentation.
 
 Simple usage is:
 
-    build_docs -b /path/to/doc/build/repo/some/subdirectory [-c] [-d]
+    build_docs -b /path/to/doc/build/repo/some/subdirectory [-c] [-d] [-i]
 
     Common additional flags are:
     -c: Before building, run 'make clean'
     -d: Use the escomp/base Docker container to build the documentation
+    -i: Do any image fetching that is needed before building the documentation
 
 Usage for automatically determining the subdirectory in which to build,
 based on the version indicated by the current branch, is:
@@ -90,6 +91,11 @@ based on the version indicated by the current branch, is:
                         "must reside somewhere within your home directory.".format(
                             docker_image=DOCKER_IMAGE))
 
+    parser.add_argument("-i", "--fetch-images", action="store_true",
+                        help="Do any image fetching that is needed before building\n"
+                        "the documentation.\n"
+                        "Currently this involves running 'make fetch-images'.")
+
     parser.add_argument("-t", "--build-target", default="html",
                         help="Target for the make command.\n"
                         "Default is 'html'.")
@@ -130,18 +136,8 @@ def setup_for_docker():
 
 def fetch_images():
     """Do any image fetching that is needed before building the documentation"""
-    print("Attempting to run 'make fetch-images', if this repository supports that target...")
-    try:
-        output = subprocess.check_output(["make", "fetch-images"],
-                                         stderr=subprocess.STDOUT,
-                                         universal_newlines=True)
-    except subprocess.CalledProcessError:
-        # Ignore a non-zero return code: it's fine to not have support for 'make
-        # fetch-images'
-        print("No support for 'make fetch-images'; moving on...")
-    else:
-        print("Successfully ran 'make fetch-images:")
-        print(output)
+    print("make fetch-images")
+    subprocess.check_call(["make", "fetch-images"])
 
 def main(cmdline_args=None):
     """Top-level function implementing build_docs.
@@ -151,6 +147,9 @@ def main(cmdline_args=None):
     """
     opts = commandline_options(cmdline_args)
 
+    if opts.fetch_images:
+        fetch_images()
+
     if opts.build_with_docker:
         # We potentially reuse the same docker name for multiple docker processes: the
         # clean and the actual build. However, since a given process should end before the
@@ -159,10 +158,6 @@ def main(cmdline_args=None):
         docker_name = setup_for_docker()
     else:
         docker_name = None
-
-    # For repositories that require fetching images from elsewhere before building the
-    # documentation, do that
-    fetch_images()
 
     # Note that we do a separate build for each version. This is
     # inefficient (assuming that the desired end result is for the
