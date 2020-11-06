@@ -128,6 +128,21 @@ def setup_for_docker():
 
     return docker_name
 
+def fetch_images():
+    """Do any image fetching that is needed before building the documentation"""
+    print("Attempting to run 'make fetch-images', if this repository supports that target...")
+    try:
+        output = subprocess.check_output(["make", "fetch-images"],
+                                         stderr=subprocess.STDOUT,
+                                         universal_newlines=True)
+    except subprocess.CalledProcessError:
+        # Ignore a non-zero return code: it's fine to not have support for 'make
+        # fetch-images'
+        print("No support for 'make fetch-images'; moving on...")
+    else:
+        print("Successfully ran 'make fetch-images:")
+        print(output)
+
 def main(cmdline_args=None):
     """Top-level function implementing build_docs.
 
@@ -144,6 +159,10 @@ def main(cmdline_args=None):
         docker_name = setup_for_docker()
     else:
         docker_name = None
+
+    # For repositories that require fetching images from elsewhere before building the
+    # documentation, do that
+    fetch_images()
 
     # Note that we do a separate build for each version. This is
     # inefficient (assuming that the desired end result is for the
