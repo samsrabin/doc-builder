@@ -79,11 +79,10 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     """
     # pylint: disable=too-many-locals
 
-    builddir_arg = "BUILDDIR={}".format(build_dir)
-    build_command = ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
-
     if docker_name is None:
-        return build_command
+        return _get_make_command(build_dir=build_dir,
+                                 build_target=build_target,
+                                 num_make_jobs=num_make_jobs)
 
     # But if we're using Docker, we have more work to do to create the command....
 
@@ -143,7 +142,10 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
         os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
 
     # This is the full command that we'll run via Docker
-    docker_run_command = docker_symlink_command + " && " + " ".join(build_command)
+    make_command = _get_make_command(build_dir=build_dir,
+                                     build_target=build_target,
+                                     num_make_jobs=num_make_jobs)
+    docker_run_command = docker_symlink_command + " && " + " ".join(make_command)
 
     docker_command = ["docker", "run",
                       "--name", docker_name,
@@ -154,3 +156,14 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
                       DOCKER_IMAGE,
                       "/bin/bash", "-c", docker_run_command]
     return docker_command
+
+def _get_make_command(build_dir, build_target, num_make_jobs):
+    """Return the make command to run (as a list)
+
+    Args:
+    - build_dir: string giving path to directory in which we should build
+    - build_target: string: target for the make command (e.g., "html")
+    - num_make_jobs: int: number of parallel jobs
+    """
+    builddir_arg = "BUILDDIR={}".format(build_dir)
+    return ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
