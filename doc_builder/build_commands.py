@@ -4,6 +4,7 @@ Functions with the main logic needed to build the command to build the docs
 
 import os
 import pathlib
+import platform
 from doc_builder import sys_utils
 
 # The Docker image used to build documentation via Docker
@@ -122,14 +123,22 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     # happens that the path given by docker_mountpoint already exists in Docker's file
     # system. (This seems unlikely to happen, so we don't bother trying to trap for it
     # here.)
-    docker_symlink_command = "sudo mkdir -p {} && sudo ln -s {} {}".format(
-        os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
+    #
+    # Also, I'm not sure this symlink will work right on Windows, so - since it is only
+    # needed in a relatively unusual case anyway - we skip making it on Windows.
+    if platform.system() == 'Windows':
+        docker_symlink_command = ""
+    else:
+        # Note that this contains the trailing " && " that is needed to join it with the
+        # next command
+        docker_symlink_command = "sudo mkdir -p {} && sudo ln -s {} {} && ".format(
+            os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
 
     # This is the full command that we'll run via Docker
     make_command = _get_make_command(build_dir=docker_build_dir,
                                      build_target=build_target,
                                      num_make_jobs=num_make_jobs)
-    docker_run_command = docker_symlink_command + " && " + " ".join(make_command)
+    docker_run_command = docker_symlink_command + " ".join(make_command)
 
     docker_command = ["docker", "run",
                       "--name", docker_name,
