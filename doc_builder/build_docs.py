@@ -38,7 +38,7 @@ Simple usage is:
     Common additional flags are:
     -c: Before building, run 'make clean'
     -d: Use the escomp/base Docker container to build the documentation
-    -i: Do any image fetching that is needed before building the documentation
+    -i: Fetch images (via git lfs pull) before building the documentation
 
 Usage for automatically determining the subdirectory in which to build,
 based on the version indicated by the current branch, is:
@@ -92,9 +92,8 @@ based on the version indicated by the current branch, is:
                             docker_image=DOCKER_IMAGE))
 
     parser.add_argument("-i", "--fetch-images", action="store_true",
-                        help="Do any image fetching that is needed before building\n"
-                        "the documentation.\n"
-                        "Currently this involves running 'make fetch-images'.")
+                        help="Fetch images before building the documentation.\n"
+                        "Currently this involves running 'git lfs pull --exclude=\"\"'.")
 
     parser.add_argument("-t", "--build-target", default="html",
                         help="Target for the make command.\n"
@@ -136,8 +135,9 @@ def setup_for_docker():
 
 def fetch_images():
     """Do any image fetching that is needed before building the documentation"""
-    print("make fetch-images")
-    subprocess.check_call(["make", "fetch-images"])
+    command = ['git', 'lfs', 'pull', '--exclude=""']
+    print(" ".join(command))
+    subprocess.check_call(command)
 
 def main(cmdline_args=None):
     """Top-level function implementing build_docs.
