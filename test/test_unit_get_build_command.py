@@ -11,6 +11,8 @@ from doc_builder.build_commands import get_build_command
 # to make readable unit test names
 # pylint: disable=invalid-name
 
+# pylint: disable=line-too-long
+
 class TestGetBuildCommand(unittest.TestCase):
     """Test the get_build_command function"""
 
@@ -28,7 +30,7 @@ class TestGetBuildCommand(unittest.TestCase):
     def test_docker(self, mock_expanduser):
         """Tests usage with use_docker=True"""
         mock_expanduser.return_value = "/path/to/username"
-        build_command = get_build_command(build_dir="/path/to/username/foorepos/foodocs/versions/main", # pylint:disable=line-too-long
+        build_command = get_build_command(build_dir="/path/to/username/foorepos/foodocs/versions/main",
                                           run_from_dir="/path/to/username/foorepos/foocode/doc",
                                           build_target="html",
                                           num_make_jobs=4,
@@ -44,7 +46,7 @@ class TestGetBuildCommand(unittest.TestCase):
                     # Note that the following three lines are all one long string
                     "sudo mkdir -p /path/to && "
                     "sudo ln -s /home/user/mounted_home /path/to/username && "
-                    "make BUILDDIR=/path/to/username/foorepos/foodocs/versions/main -j 4 html"]
+                    "make BUILDDIR=/home/user/mounted_home/foorepos/foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
     @patch('os.path.expanduser')
@@ -67,7 +69,7 @@ class TestGetBuildCommand(unittest.TestCase):
                     # Note that the following three lines are all one long string
                     "sudo mkdir -p /path/to && "
                     "sudo ln -s /home/user/mounted_home /path/to/username && "
-                    "make BUILDDIR=../../foodocs/versions/main -j 4 html"]
+                    "make BUILDDIR=/home/user/mounted_home/foorepos/foodocs/versions/main -j 4 html"]
         self.assertEqual(expected, build_command)
 
     @patch('os.path.expanduser')

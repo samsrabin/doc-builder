@@ -103,33 +103,30 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
         build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
     build_dir_path = pathlib.Path(build_dir_abs)
     try:
-        _ = build_dir_path.relative_to(docker_mountpoint)
+        build_dir_relpath = build_dir_path.relative_to(docker_mountpoint)
     except ValueError:
         raise RuntimeError("build directory must reside under your home directory")
 
-    # I think we need to do this conversion to a PosixPath for the sake of Windows
-    # machines, where run_from_dir_relpath is a WindowsPath but we want a Posix path for
-    # Docker. (But it may be that this is unnecessary.)
+    # I think we need to do these conversions to a PosixPath for the sake of Windows
+    # machines, where run_from_dir_relpath and build_dir_relpath are WindowsPaths but we
+    # want Posix paths for Docker. (But it may be that this is unnecessary.)
     run_from_dir_relpath_posix = pathlib.PurePosixPath(run_from_dir_relpath)
+    build_dir_relpath_posix = pathlib.PurePosixPath(build_dir_relpath)
     # In the following, we deliberately hard-code "/" rather than using something like
     # os.path.join, because we need a path that works in Docker's file system, not the
     # native file system (in case the native file system is Windows).
     docker_workdir = _DOCKER_HOME + "/" + str(run_from_dir_relpath_posix)
+    docker_build_dir = _DOCKER_HOME + "/" + str(build_dir_relpath_posix)
 
-    # We need to create a symlink for two reasons:
+    # The need for this symlink is subtle: For CTSM, the documentation build invokes 'git
+    # lfs pull'. However, when doing the documentation build from a git worktree, the .git
+    # directory is replaced with a text file giving the absolute path to the parent git
+    # repository, e.g., 'gitdir: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5'. So when
+    # trying to execute a git command from within the Docker image, you get a message
+    # like, 'fatal: not a git repository: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5',
+    # because in Docker-land, this path doesn't exist.
     #
-    # (1) If the build_dir is an absolute rather than relative path, this path won't exist
-    #     in Docker's file system
-    #
-    # (2) For CTSM, the documentation build invokes 'git lfs pull'. However, when doing
-    #     the documentation build from a git worktree, the .git directory is replaced with
-    #     a text file giving the absolute path to the parent git repository, e.g.,
-    #     'gitdir: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5'. So when trying to
-    #     execute a git command from within the Docker image, you get a message like,
-    #     'fatal: not a git repository: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5',
-    #     because in Docker-land, this path doesn't exist.
-    #
-    # To work around these problems, we create a sym link in Docker's file system with the
+    # To work around this problem, we create a sym link in Docker's file system with the
     # appropriate mapping. For example, if the local file system's mount-point is
     # /path/to/foo, then we create a sym link at /path/to/foo in Docker's file system,
     # pointing to the home directory in the Docker file system.
@@ -142,7 +139,7 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
         os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
 
     # This is the full command that we'll run via Docker
-    make_command = _get_make_command(build_dir=build_dir,
+    make_command = _get_make_command(build_dir=docker_build_dir,
                                      build_target=build_target,
                                      num_make_jobs=num_make_jobs)
     docker_run_command = docker_symlink_command + " && " + " ".join(make_command)
