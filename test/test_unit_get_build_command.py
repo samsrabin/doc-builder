@@ -42,17 +42,8 @@ class TestGetBuildCommand(unittest.TestCase):
                     "-t",
                     "--rm",
                     "escomp/base",
-                    "/bin/bash", "-c",
-                    # Note that the following three lines are all one long string
-                    #
-                    # Also note that this will currently fail on Windows, because we don't
-                    # include the link command there (if need be, we could include some
-                    # platform logic in this unit test, but actually, there may be bigger
-                    # issues on Windows due to the paths in this unit test being
-                    # Posix-style rather than Windows-style)
-                    "sudo mkdir -p /path/to && "
-                    "sudo ln -s /home/user/mounted_home /path/to/username && "
-                    "make BUILDDIR=/home/user/mounted_home/foorepos/foodocs/versions/main -j 4 html"]
+                    "make", "BUILDDIR=/home/user/mounted_home/foorepos/foodocs/versions/main",
+                    "-j", "4", "html"]
         self.assertEqual(expected, build_command)
 
     @patch('os.path.expanduser')
@@ -71,17 +62,8 @@ class TestGetBuildCommand(unittest.TestCase):
                     "-t",
                     "--rm",
                     "escomp/base",
-                    "/bin/bash", "-c",
-                    # Note that the following three lines are all one long string
-                    #
-                    # Also note that this will currently fail on Windows, because we don't
-                    # include the link command there (if need be, we could include some
-                    # platform logic in this unit test, but actually, there may be bigger
-                    # issues on Windows due to the paths in this unit test being
-                    # Posix-style rather than Windows-style)
-                    "sudo mkdir -p /path/to && "
-                    "sudo ln -s /home/user/mounted_home /path/to/username && "
-                    "make BUILDDIR=/home/user/mounted_home/foorepos/foodocs/versions/main -j 4 html"]
+                    "make", "BUILDDIR=/home/user/mounted_home/foorepos/foodocs/versions/main",
+                    "-j", "4", "html"]
         self.assertEqual(expected, build_command)
 
     @patch('os.path.expanduser')

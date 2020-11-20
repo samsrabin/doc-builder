@@ -4,7 +4,6 @@ Functions with the main logic needed to build the command to build the docs
 
 import os
 import pathlib
-import platform
 from doc_builder import sys_utils
 
 # The Docker image used to build documentation via Docker
@@ -106,39 +105,9 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
         errmsg_if_not_under_mountpoint=
         "build directory must reside under your home directory")
 
-    # The need for this symlink is subtle: For CTSM, the documentation build invokes 'git
-    # lfs pull'. However, when doing the documentation build from a git worktree, the .git
-    # directory is replaced with a text file giving the absolute path to the parent git
-    # repository, e.g., 'gitdir: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5'. So when
-    # trying to execute a git command from within the Docker image, you get a message
-    # like, 'fatal: not a git repository: /Users/sacks/ctsm/ctsm0/.git/worktrees/ctsm5',
-    # because in Docker-land, this path doesn't exist.
-    #
-    # To work around this problem, we create a sym link in Docker's file system with the
-    # appropriate mapping. For example, if the local file system's mount-point is
-    # /path/to/foo, then we create a sym link at /path/to/foo in Docker's file system,
-    # pointing to the home directory in the Docker file system.
-    #
-    # However, note that this creation of a symlink could cause its own problems if it
-    # happens that the path given by docker_mountpoint already exists in Docker's file
-    # system. (This seems unlikely to happen, so we don't bother trying to trap for it
-    # here.)
-    #
-    # Also, I'm not sure this symlink will work right on Windows, so - since it is only
-    # needed in a relatively unusual case anyway - we skip making it on Windows.
-    if platform.system() == 'Windows':
-        docker_symlink_command = ""
-    else:
-        # Note that this contains the trailing " && " that is needed to join it with the
-        # next command
-        docker_symlink_command = "sudo mkdir -p {} && sudo ln -s {} {} && ".format(
-            os.path.dirname(docker_mountpoint), _DOCKER_HOME, docker_mountpoint)
-
-    # This is the full command that we'll run via Docker
     make_command = _get_make_command(build_dir=docker_build_dir,
                                      build_target=build_target,
                                      num_make_jobs=num_make_jobs)
-    docker_run_command = docker_symlink_command + " ".join(make_command)
 
     docker_command = ["docker", "run",
                       "--name", docker_name,
@@ -146,8 +115,7 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
                       "--workdir", docker_workdir,
                       "-t",  # "-t" is needed for colorful output
                       "--rm",
-                      DOCKER_IMAGE,
-                      "/bin/bash", "-c", docker_run_command]
+                      DOCKER_IMAGE] + make_command
     return docker_command
 
 def _get_make_command(build_dir, build_target, num_make_jobs):
