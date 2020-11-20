@@ -37,7 +37,7 @@ class TestGetBuildCommand(unittest.TestCase):
                                           docker_name='foo')
         expected = ["docker", "run",
                     "--name", "foo",
-                    "--volume", "/path/to/username:/home/user/mounted_home",
+                    "--mount", "type=bind,source=/path/to/username,target=/home/user/mounted_home",
                     "--workdir", "/home/user/mounted_home/foorepos/foocode/doc",
                     "-t",
                     "--rm",
@@ -57,7 +57,7 @@ class TestGetBuildCommand(unittest.TestCase):
                                           docker_name='foo')
         expected = ["docker", "run",
                     "--name", "foo",
-                    "--volume", "/path/to/username:/home/user/mounted_home",
+                    "--mount", "type=bind,source=/path/to/username,target=/home/user/mounted_home",
                     "--workdir", "/home/user/mounted_home/foorepos/foocode/doc",
                     "-t",
                     "--rm",
