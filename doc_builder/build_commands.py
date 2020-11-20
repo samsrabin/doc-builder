@@ -77,8 +77,6 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     - docker_name: string or None: if not None, uses a Docker container to do the build,
         with the given name
     """
-    # pylint: disable=too-many-locals
-
     if docker_name is None:
         return _get_make_command(build_dir=build_dir,
                                  build_target=build_target,
@@ -91,32 +89,21 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     # check this assumption below).
     docker_mountpoint = os.path.expanduser('~')
 
-    run_from_dir_path = pathlib.Path(run_from_dir)
-    try:
-        run_from_dir_relpath = run_from_dir_path.relative_to(docker_mountpoint)
-    except ValueError:
-        raise RuntimeError("build_docs must be run from somewhere within your home directory")
+    docker_workdir = _docker_path_from_local_path(
+        local_path=run_from_dir,
+        docker_mountpoint=docker_mountpoint,
+        errmsg_if_not_under_mountpoint=
+        "build_docs must be run from somewhere within your home directory")
 
     if os.path.isabs(build_dir):
         build_dir_abs = build_dir
     else:
         build_dir_abs = os.path.normpath(os.path.join(run_from_dir, build_dir))
-    build_dir_path = pathlib.Path(build_dir_abs)
-    try:
-        build_dir_relpath = build_dir_path.relative_to(docker_mountpoint)
-    except ValueError:
-        raise RuntimeError("build directory must reside under your home directory")
-
-    # I think we need to do these conversions to a PosixPath for the sake of Windows
-    # machines, where run_from_dir_relpath and build_dir_relpath are WindowsPaths but we
-    # want Posix paths for Docker. (But it may be that this is unnecessary.)
-    run_from_dir_relpath_posix = pathlib.PurePosixPath(run_from_dir_relpath)
-    build_dir_relpath_posix = pathlib.PurePosixPath(build_dir_relpath)
-    # In the following, we deliberately hard-code "/" rather than using something like
-    # os.path.join, because we need a path that works in Docker's file system, not the
-    # native file system (in case the native file system is Windows).
-    docker_workdir = _DOCKER_HOME + "/" + str(run_from_dir_relpath_posix)
-    docker_build_dir = _DOCKER_HOME + "/" + str(build_dir_relpath_posix)
+    docker_build_dir = _docker_path_from_local_path(
+        local_path=build_dir_abs,
+        docker_mountpoint=docker_mountpoint,
+        errmsg_if_not_under_mountpoint=
+        "build directory must reside under your home directory")
 
     # The need for this symlink is subtle: For CTSM, the documentation build invokes 'git
     # lfs pull'. However, when doing the documentation build from a git worktree, the .git
@@ -164,3 +151,32 @@ def _get_make_command(build_dir, build_target, num_make_jobs):
     """
     builddir_arg = "BUILDDIR={}".format(build_dir)
     return ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
+
+def _docker_path_from_local_path(local_path, docker_mountpoint, errmsg_if_not_under_mountpoint):
+    """Given a path on the local file system, return the equivalent path in Docker space
+
+    Args:
+    - local_path: string: absolute path on local file system; this must reside under
+        docker_mountpoint
+    - docker_mountpoint: string: path on local file system that is mounted to _DOCKER_HOME
+    - errmsg_if_not_under_mountpoint: string: message to print if local_path does not
+        reside under docker_mountpoint
+    """
+    if not os.path.isabs(local_path):
+        raise RuntimeError("Expect absolute path; got {}".format(local_path))
+
+    local_pathobj = pathlib.Path(local_path)
+    try:
+        relpath = local_pathobj.relative_to(docker_mountpoint)
+    except ValueError:
+        raise RuntimeError(errmsg_if_not_under_mountpoint)
+
+    # I think we need to do this conversion to a PosixPath for the sake of Windows
+    # machines, where relpath is a Windows-style path, but we want Posix paths for
+    # Docker. (But it may be that this is unnecessary.)
+    relpath_posix = pathlib.PurePosixPath(relpath)
+
+    # In the following, we deliberately hard-code "/" rather than using something like
+    # os.path.join, because we need a path that works in Docker's file system, not the
+    # native file system (in case the native file system is Windows).
+    return _DOCKER_HOME + "/" + str(relpath_posix)
