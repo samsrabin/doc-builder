@@ -38,7 +38,6 @@ Simple usage is:
     Common additional flags are:
     -c: Before building, run 'make clean'
     -d: Use the escomp/base Docker container to build the documentation
-    -i: Fetch images (via git lfs pull) before building the documentation
 
 Usage for automatically determining the subdirectory in which to build,
 based on the version indicated by the current branch, is:
@@ -91,11 +90,6 @@ based on the version indicated by the current branch, is:
                         "must reside somewhere within your home directory.".format(
                             docker_image=DOCKER_IMAGE))
 
-    parser.add_argument("-i", "--fetch-images", action="store_true",
-                        help="Fetch images before building the documentation.\n"
-                        "Currently this involves running something equivalent to:\n"
-                        "'git lfs pull --exclude=\"\" --include=\"\"'.")
-
     parser.add_argument("-t", "--build-target", default="html",
                         help="Target for the make command.\n"
                         "Default is 'html'.")
@@ -134,19 +128,6 @@ def setup_for_docker():
 
     return docker_name
 
-def fetch_images():
-    """Do any image fetching that is needed before building the documentation"""
-    # For some reason 'git lfs pull --exclude="" --include=""' doesn't work consistently
-    # within python, even though it works from the command line. Splitting it into
-    # separate fetch and checkout steps seems to work more consistently.
-    command = ['git', 'lfs', 'fetch', '--exclude=""', '--include=""']
-    print(" ".join(command))
-    subprocess.check_call(command)
-
-    command = ['git', 'lfs', 'checkout']
-    print(" ".join(command))
-    subprocess.check_call(command)
-
 def main(cmdline_args=None):
     """Top-level function implementing build_docs.
 
@@ -154,9 +135,6 @@ def main(cmdline_args=None):
     arguments. This is typically just used for testing.
     """
     opts = commandline_options(cmdline_args)
-
-    if opts.fetch_images:
-        fetch_images()
 
     if opts.build_with_docker:
         # We potentially reuse the same docker name for multiple docker processes: the
