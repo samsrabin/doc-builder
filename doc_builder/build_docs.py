@@ -93,7 +93,8 @@ based on the version indicated by the current branch, is:
 
     parser.add_argument("-i", "--fetch-images", action="store_true",
                         help="Fetch images before building the documentation.\n"
-                        "Currently this involves running 'git lfs pull --exclude=\"\"'.")
+                        "Currently this involves running:\n"
+                        "'git lfs pull --exclude=\"\" --include=\"\"'.")
 
     parser.add_argument("-t", "--build-target", default="html",
                         help="Target for the make command.\n"
@@ -135,7 +136,7 @@ def setup_for_docker():
 
 def fetch_images():
     """Do any image fetching that is needed before building the documentation"""
-    command = ['git', 'lfs', 'pull', '--exclude=""']
+    command = ['git', 'lfs', 'pull', '--exclude=""', '--include=""']
     print(" ".join(command))
     subprocess.check_call(command)
 
