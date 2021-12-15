@@ -93,7 +93,7 @@ based on the version indicated by the current branch, is:
 
     parser.add_argument("-i", "--fetch-images", action="store_true",
                         help="Fetch images before building the documentation.\n"
-                        "Currently this involves running:\n"
+                        "Currently this involves running something equivalent to:\n"
                         "'git lfs pull --exclude=\"\" --include=\"\"'.")
 
     parser.add_argument("-t", "--build-target", default="html",
@@ -136,7 +136,14 @@ def setup_for_docker():
 
 def fetch_images():
     """Do any image fetching that is needed before building the documentation"""
-    command = ['git', 'lfs', 'pull', '--exclude=""', '--include=""']
+    # For some reason 'git lfs pull --exclude="" --include=""' doesn't work consistently
+    # within python, even though it works from the command line. Splitting it into
+    # separate fetch and checkout steps seems to work more consistently.
+    command = ['git', 'lfs', 'fetch', '--exclude=""', '--include=""']
+    print(" ".join(command))
+    subprocess.check_call(command)
+
+    command = ['git', 'lfs', 'checkout']
     print(" ".join(command))
     subprocess.check_call(command)
 
