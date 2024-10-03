@@ -98,6 +98,9 @@ based on the version indicated by the current branch, is:
                         help="Number of parallel jobs to use for the make process.\n"
                         "Default is 4.")
 
+    parser.add_argument("-w", "--warnings-as-warnings", action="store_true",
+                        help="Treat sphinx warnings as warnings, not errors.")
+
     options = parser.parse_args(cmdline_args)
     return options
 
@@ -172,5 +175,7 @@ def main(cmdline_args=None):
                                           run_from_dir=os.getcwd(),
                                           build_target=opts.build_target,
                                           num_make_jobs=opts.num_make_jobs,
-                                          docker_name=docker_name)
+                                          docker_name=docker_name,
+                                          warnings_as_warnings=opts.warnings_as_warnings,
+                                          )
         run_build_command(build_command=build_command)
