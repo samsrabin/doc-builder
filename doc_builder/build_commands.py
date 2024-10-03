@@ -64,7 +64,9 @@ command-line argument '--doc-version {version}'""".format(build_dir=build_dir,
 
     return build_dir
 
-def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, docker_name=None):
+def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, docker_name=None,
+                      warnings_as_warnings=False,
+                      ):
     """Return a string giving the build command.
 
     Args:
@@ -80,7 +82,9 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
     if docker_name is None:
         return _get_make_command(build_dir=build_dir,
                                  build_target=build_target,
-                                 num_make_jobs=num_make_jobs)
+                                 num_make_jobs=num_make_jobs,
+                                 warnings_as_warnings=warnings_as_warnings,
+                                 )
 
     # But if we're using Docker, we have more work to do to create the command....
 
@@ -107,7 +111,9 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
 
     make_command = _get_make_command(build_dir=docker_build_dir,
                                      build_target=build_target,
-                                     num_make_jobs=num_make_jobs)
+                                     num_make_jobs=num_make_jobs,
+                                     warnings_as_warnings=warnings_as_warnings,
+                                     )
 
     docker_command = ["docker", "run",
                       "--name", docker_name,
@@ -119,7 +125,7 @@ def get_build_command(build_dir, run_from_dir, build_target, num_make_jobs, dock
                       DOCKER_IMAGE] + make_command
     return docker_command
 
-def _get_make_command(build_dir, build_target, num_make_jobs):
+def _get_make_command(build_dir, build_target, num_make_jobs, warnings_as_warnings):
     """Return the make command to run (as a list)
 
     Args:
@@ -128,7 +134,10 @@ def _get_make_command(build_dir, build_target, num_make_jobs):
     - num_make_jobs: int: number of parallel jobs
     """
     builddir_arg = "BUILDDIR={}".format(build_dir)
-    return ["make", builddir_arg, "-j", str(num_make_jobs), build_target]
+    sphinxopts = "SPHINXOPTS="
+    if not warnings_as_warnings:
+        sphinxopts += "-W --keep-going"
+    return ["make", sphinxopts, builddir_arg, "-j", str(num_make_jobs), build_target]
 
 def _docker_path_from_local_path(local_path, docker_mountpoint, errmsg_if_not_under_mountpoint):
     """Given a path on the local file system, return the equivalent path in Docker space
