@@ -110,6 +110,12 @@ based on the version indicated by the current branch, is:
     )
 
     parser.add_argument(
+        "--version-display-name",
+        default=None,
+        help="Version name for display in dropdown menu. If absent, uses -v/--version.",
+    )
+
+    parser.add_argument(
         "-c", "--clean", action="store_true", help="Before building, run 'make clean'."
     )
 
@@ -194,7 +200,12 @@ def run_build_command(build_command, version, options):
     build_command_str = " ".join(build_command)
     print(build_command_str)
     env = os.environ.copy()
-    env["current_version"] = version
+
+    # Set version display name (in drop-down menu)
+    if options.version_display_name:
+        env["version_display_name"] = options.version_display_name
+    else:
+        env["version_display_name"] = version
 
     # Things to do/set based on whether including version dropdown
     if options.versions:

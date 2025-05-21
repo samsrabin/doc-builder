@@ -29,14 +29,14 @@ class VersionInfo:
 
 # Define the versions we want to build.
 # short_name=None means that will be the landing version.
-LATEST_REF = "master"
+LATEST_REF = "auto-version-publishing"
 VERSION_LIST = [
     VersionInfo(
         short_name=None, display_name="Latest development code", ref=LATEST_REF
     ),
-    # VersionInfo(
-    #     short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
-    # ),
+    VersionInfo(
+        short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
+    ),
 ]
 
 # Where the docs should be moved after being built
@@ -49,13 +49,38 @@ BUILD_DIR = "_build"
 # TODO: Make this a required cmd-line argument
 SITE_ROOT = os.path.abspath(PUBLISH_DIR)
 
-# Change to the directory of this file
-os.chdir(os.path.dirname(__file__))
+# Change to the parent director of doc-builder
+os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
 
-# Path to conf.py (from this directory, if relative)
+# Path to conf.py
 # TODO: Make this a cmd-line option
-CONF_PY = os.path.join(os.pardir, "source", "conf.py")
+CONF_PY = os.path.join("source", "conf.py")
 
+def get_git_head_or_branch():
+    try:
+        result = subprocess.run(
+            ['git', 'symbolic-ref', '--short', '-q', 'HEAD'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+    except subprocess.CalledProcessError:
+        output = ''
+
+    if not output:
+        # Fallback to commit SHA
+        result = subprocess.run(
+            ['git', 'rev-parse', 'HEAD'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+
+    return output
 
 def checkout_and_build(version):
     """
@@ -66,18 +91,30 @@ def checkout_and_build(version):
     if not os.path.exists(CONF_PY):
         raise FileNotFoundError(CONF_PY)
 
-    # Check out the ref for this version, but keep conf.py as its latest version
+    # Get the current branch, or SHA if detached HEAD
+    orig_ref = get_git_head_or_branch()
+
+    # Check out the ref for this version, skipping some files
+    things_to_skip = [CONF_PY, "doc-builder"]
+    for thing in things_to_skip:
+        subprocess.check_output("git add " + thing, shell=True)
     subprocess.check_output("git checkout " + version.ref, shell=True)
     subprocess.check_output(f"git checkout {LATEST_REF} -- {CONF_PY}", shell=True)
 
     # Build the docs for this version
     build_args = [
-        "-b", BUILD_DIR,
-        "-v", version,
+        "-r", BUILD_DIR,
+        "-v", str(version.short_name),
+        "--version-display-name", version.display_name,
         "--versions",
-        "--site-root", os.path.abspath(SITE_ROOT)
+        "--site-root", os.path.abspath(SITE_ROOT),
+        # TODO: add -c for clean build
     ]
+    print(" ".join(build_args))
     build_docs(build_args)
+    
+    # Go back to original place
+    subprocess.check_output("git checkout " + orig_ref, shell=True)
 
 
 def move_dir(src, dst):
@@ -109,11 +146,11 @@ def main():
     # and looping over all values to call our build with version, language and its tag
     for version in VERSION_LIST:
         checkout_and_build(version)
-        subdir = version.short_name if version.short_name else ""
-        move_dir(
-            os.path.join(BUILD_DIR, "html"),
-            os.path.join(PUBLISH_DIR, subdir)
-            )
+        # subdir = version.short_name if version.short_name else ""
+        # move_dir(
+        #     os.path.join(BUILD_DIR, "html"),
+        #     os.path.join(PUBLISH_DIR, subdir)
+        #     )
 
 
 if __name__ == "__main__":
