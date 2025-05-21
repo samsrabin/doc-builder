@@ -8,12 +8,27 @@ import os
 import random
 import string
 import sys
+from urllib.parse import urlparse
 import signal
 from doc_builder.build_commands import (
     get_build_dir,
     get_build_command,
     DEFAULT_DOCKER_IMAGE,
 )
+
+
+def is_web_url(url_string):
+    """
+    Checks if a string is a valid web URL.
+
+    Args:
+        url_string: The string to check.
+
+    Returns:
+        True if the string is a valid web URL, False otherwise.
+    """
+    result = urlparse(url_string)
+    return all([result.scheme, result.netloc])
 
 
 def commandline_options(cmdline_args=None):
@@ -137,6 +152,18 @@ based on the version indicated by the current branch, is:
     )
 
     parser.add_argument(
+        "--site-root",
+        default=None,
+        help="URL or absolute file path that should contain the top-level index.html. Ignored if --versions not given.",
+    )
+
+    parser.add_argument(
+        "--versions",
+        action="store_true",
+        help="Build multiple versions of the docs, with drop-down switcher menu.",
+    )
+
+    parser.add_argument(
         "-w",
         "--warnings-as-warnings",
         action="store_true",
@@ -144,6 +171,14 @@ based on the version indicated by the current branch, is:
     )
 
     options = parser.parse_args(cmdline_args)
+
+    if options.versions:
+        if not options.site_root:
+            raise RuntimeError("--site-root must be provided when --versions is enabled")
+        if not is_web_url(options.site_root) and not os.path.isabs(options.site_root):
+            raise RuntimeError(
+                f"--site-root is neither a web URL nor an absolute path: '{options.site_root}'"
+            )
 
     if options.docker_image:
         options.docker_image = options.docker_image.lower()
@@ -154,12 +189,20 @@ based on the version indicated by the current branch, is:
     return options
 
 
-def run_build_command(build_command, version):
+def run_build_command(build_command, version, options):
     """Echo and then run the given build command"""
     build_command_str = " ".join(build_command)
     print(build_command_str)
     env = os.environ.copy()
     env["current_version"] = version
+
+    # Things to do/set based on whether including version dropdown
+    if options.versions:
+        env["version_dropdown"] = "True"
+        env["pages_root"] = options.site_root
+    else:
+        env["version_dropdown"] = ""
+
     subprocess.check_call(build_command, env=env)
 
 
@@ -227,7 +270,7 @@ def main(cmdline_args=None):
                 docker_name=docker_name,
                 docker_image=opts.docker_image,
             )
-            run_build_command(build_command=clean_command, version=version)
+            run_build_command(build_command=clean_command, version=version, options=opts)
 
         build_command = get_build_command(
             build_dir=build_dir,
@@ -239,4 +282,4 @@ def main(cmdline_args=None):
             docker_image=opts.docker_image,
             warnings_as_warnings=opts.warnings_as_warnings,
         )
-        run_build_command(build_command=build_command, version=version)
+        run_build_command(build_command=build_command, version=version, options=opts)
