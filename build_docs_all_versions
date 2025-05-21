@@ -10,13 +10,24 @@ import shutil
 import subprocess
 from doc_builder.build_docs import main as build_docs
 
+
 class VersionInfo:
     """
     A class defining characteristics of a documentation version
     """
 
     # pylint: disable=too-few-public-methods
-    def __init__(self, *, short_name, display_name, ref):
+    def __init__(
+        self,
+        *,
+        short_name,
+        display_name,
+        ref,
+        release,
+        version,
+        version_label,
+        landing_version=False,
+    ):
 
         # The name of this version in file/URL paths
         self.short_name = short_name
@@ -24,8 +35,28 @@ class VersionInfo:
         # What gets shown in the dropdown menu
         self.display_name = display_name
 
+        # Whether this version should be the one on the landing page (i.e., default version)
+        self.landing_version = landing_version
+
         # Branch, tag, or commit SHA
         self.ref = ref
+
+        # Text for standard Sphinx substitution variable "release"
+        self.release = release
+
+        # Text for standard Sphinx substitution variable "version"
+        self.version = version
+
+        # Text for custom CTSM substitution variable "version_label"
+        self.version_label = version_label
+
+    def subdir(self):
+        """
+        Get the subdirectory under PUBLISH_DIR where this version's HTML will be moved
+        """
+        if self.landing_version:
+            return ""
+        return self.short_name
 
 
 # Define the versions we want to build.
@@ -33,10 +64,21 @@ class VersionInfo:
 LATEST_REF = "auto-version-publishing"
 VERSION_LIST = [
     VersionInfo(
-        short_name="latest", display_name="Latest development code", ref=LATEST_REF
+        short_name="latest",
+        display_name="Latest development code",
+        landing_version=True,
+        ref=LATEST_REF,
+        release="CTSM master",
+        version="CTSM1",
+        version_label="the latest development code",
     ),
     VersionInfo(
-        short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
+        short_name="release-clm5.0",
+        display_name="CLM5.0",
+        ref="release-clm5.0",
+        release="release-clm5.0",
+        version="CLM5.0",
+        version_label="CLM5.0 (CESM2.1)",
     ),
 ]
 
@@ -57,31 +99,33 @@ os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
 # TODO: Make this a cmd-line option
 CONF_PY = os.path.join("source", "conf.py")
 
+
 def get_git_head_or_branch():
     try:
         result = subprocess.run(
-            ['git', 'symbolic-ref', '--short', '-q', 'HEAD'],
+            ["git", "symbolic-ref", "--short", "-q", "HEAD"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
-            check=True
+            check=True,
         )
         output = result.stdout.strip()
     except subprocess.CalledProcessError:
-        output = ''
+        output = ""
 
     if not output:
         # Fallback to commit SHA
         result = subprocess.run(
-            ['git', 'rev-parse', 'HEAD'],
+            ["git", "rev-parse", "HEAD"],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
-            check=True
+            check=True,
         )
         output = result.stdout.strip()
 
     return output
+
 
 def checkout_and_build(version):
     """
@@ -103,7 +147,9 @@ def checkout_and_build(version):
         try:
             subprocess.check_output(cmd, shell=True)
         except subprocess.CalledProcessError as e:
-            subprocess.check_output("git reset", shell=True)  # Unstage files staged by `git add`
+            subprocess.check_output(
+                "git reset", shell=True
+            )  # Unstage files staged by `git add`
             msg = f"Important file/submodule may contain uncommitted changes: '{thing}'"
             raise RuntimeError(msg) from e
 
@@ -116,20 +162,23 @@ def checkout_and_build(version):
 
     # Build the docs for this version
     build_args = [
-        "-r", BUILD_DIR,
-        "-v", version.short_name,
-        "--version-display-name", version.display_name,
+        "-r",
+        BUILD_DIR,
+        "-v",
+        version.short_name,
+        "--version-display-name",
+        version.display_name,
         "--versions",
-        "--site-root", os.path.abspath(SITE_ROOT),
+        "--site-root",
+        os.path.abspath(SITE_ROOT),
         # TODO: add -c for clean build
     ]
     print(" ".join(build_args))
     # build_docs(build_args)
-    
+
     if version.short_name != "latest":
         winriewnr
-    
-    
+
     # Go back to original place
     subprocess.check_output("git checkout " + orig_ref, shell=True)
 
@@ -147,12 +196,15 @@ def check_version_list():
     """
     Check version list for problems
     """
-    # n_none = 0
-    # for version in VERSION_LIST:
-    #     # Expect exactly one version with short_name=None
-    #     n_none += int(version.short_name is None)
-    # if n_none != 1:
-    #     raise RuntimeError(f"Expected one version with short_name=None; found {n_none}")
+    has_default = False
+    for version in VERSION_LIST:
+        # Expect at most one version with landing_version True
+        if version.landing_version:
+            if has_default:
+                raise RuntimeError(
+                    "Expected at most one version with landing_version True"
+                )
+            has_default = True
 
 
 def main():
@@ -163,10 +215,9 @@ def main():
     # and looping over all values to call our build with version, language and its tag
     for version in VERSION_LIST:
         checkout_and_build(version)
-        # src = os.path.join(BUILD_DIR, "versions", version.short_name, "html")
-        # # TODO: If default version, don't append version.short_name
-        # dst = os.path.join(PUBLISH_DIR, version.short_name)
-        # shutil.move(src, dst)
+        src = os.path.join(BUILD_DIR, "versions", version.short_name, "html")
+        dst = os.path.join(PUBLISH_DIR, version.subdir())
+        shutil.move(src, dst)
 
 
 if __name__ == "__main__":
