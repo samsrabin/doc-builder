@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+
+"""
+# Adapted from https://www.codingwiththomas.com/blog/my-sphinx-best-practice-for-a-multiversion-documentation-in-different-languages
+# (last visited 2025-05-20)
+"""
+
+import os
+import subprocess
+
+class VersionInfo:
+    """
+    A class defining characteristics of a documentation version
+    """
+
+    # pylint: disable=too-few-public-methods
+    def __init__(self, *, short_name, display_name, ref):
+
+        # The name of this version in file/URL paths
+        self.short_name = short_name
+
+        # What gets shown in the dropdown menu
+        self.display_name = display_name
+
+        # Branch, tag, or commit SHA
+        self.ref = ref
+
+
+# Define the versions we want to build.
+# short_name=None means that will be the landing version.
+MAKE IT SO THAT "LATEST" ALWAYS GETS COPIED TO TOP LEVEL LIKE HOW THOMAS HANDLED "MAIN"
+LATEST_REF = "master"
+VERSION_LIST = [
+    VersionInfo(
+        short_name=None, display_name="Latest development code", ref=LATEST_REF
+    ),
+    VersionInfo(
+        short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
+    ),
+]
+
+
+def build_doc(version):
+    """
+    Check out docs for a version and build
+    """
+    # Set this so that it can be accessed by conf.py
+    os.environ["current_version"] = version
+
+    # Check out the ref for this version, but keep conf.py as its latest version
+    subprocess.check_output("git checkout " + version.ref, shell=True)
+    subprocess.check_output(f"git checkout {LATEST_REF} -- conf.py", shell=True)
+
+    # Build the docs for this version
+    subprocess.check_output("make html", shell=True)
+
+
+# a move dir method because we run multiple builds and bring the html folders to a
+# location which we then push to github pages
+def move_dir(src, dst):
+    """
+
+    """
+    subprocess.check_output(["mkdir", "-p", dst])
+    subprocess.check_output("mv " + src + "* " + dst, shell=True)
+
+
+def check_version_list():
+    """
+    Check version list for problems
+    """
+    n_none = 0
+    for version in VERSION_LIST:
+        # Expect exactly one version with short_name=None
+        n_none += int(version.short_name is None)
+    if n_none != 1:
+        raise RuntimeError(f"Expected one version with short_name=None; found {n_none}")
+
+
+def main():
+
+    # Check version list for problems
+    check_version_list()
+
+    # to separate a single local build from all builds we have a flag, see conf.py
+    os.environ["build_all_docs"] = str(True)
+    os.environ["pages_root"] = "https://samsrabin.github.io/docs-deploy-testing"
+
+    # and looping over all values to call our build with version, language and its tag
+    for version in VERSION_LIST:
+        build_doc(version)
+        move_dir("./_build/html/", "../pages/" + version + "/" + language + "/")
+
+
+if __name__ == "__main__":
+    main()
