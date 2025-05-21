@@ -123,7 +123,7 @@ def checkout_and_build(version):
         # TODO: add -c for clean build
     ]
     print(" ".join(build_args))
-    build_docs(build_args)
+    # build_docs(build_args)
     
     # Go back to original place
     subprocess.check_output("git checkout " + orig_ref, shell=True)
@@ -158,10 +158,10 @@ def main():
     # and looping over all values to call our build with version, language and its tag
     for version in VERSION_LIST:
         checkout_and_build(version)
-        src = os.path.join(BUILD_DIR, "versions", version.short_name, "html")
-        # TODO: If default version, don't append version.short_name
-        dst = os.path.join(PUBLISH_DIR, version.short_name)
-        shutil.move(src, dst)
+        # src = os.path.join(BUILD_DIR, "versions", version.short_name, "html")
+        # # TODO: If default version, don't append version.short_name
+        # dst = os.path.join(PUBLISH_DIR, version.short_name)
+        # shutil.move(src, dst)
 
 
 if __name__ == "__main__":
