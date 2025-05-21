@@ -32,8 +32,11 @@ from source.version_list import LATEST_REF, VERSION_LIST  # pylint: disable=wron
 
 # Path to certain important files
 # TODO: Make these cmd-line options
-CONF_PY = os.path.join("source", "conf.py")
-VERSIONS_PY = os.path.join("source", "version_list.py")
+SOURCE = "source"
+CONF_PY = os.path.join(SOURCE, "conf.py")
+VERSIONS_PY = os.path.join(SOURCE, "version_list.py")
+STATIC_DIR = os.path.join(SOURCE, "_static")
+TEMPLATES_DIR = os.path.join(SOURCE, "_templates")
 
 
 def get_git_head_or_branch():
@@ -79,7 +82,7 @@ def checkout_and_build(version):
     orig_ref = get_git_head_or_branch()
 
     # Check out the ref for this version, skipping some files
-    things_to_skip = [CONF_PY, VERSIONS_PY, "doc-builder"]
+    things_to_skip = [CONF_PY, VERSIONS_PY, STATIC_DIR, TEMPLATES_DIR, "doc-builder"]
     for thing in things_to_skip:
         # Error if doesn't exist
         if not os.path.exists(thing):
