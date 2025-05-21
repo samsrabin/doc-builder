@@ -33,7 +33,7 @@ from version_list import LATEST_REF, VERSION_LIST  # pylint: disable=wrong-impor
 # Path to certain important files
 # TODO: Make these cmd-line options
 CONF_PY = os.path.join("source", "conf.py")
-VERSIONS_PY = os.path.join("source", "version_list.py")
+VERSIONS_PY = "version_list.py"
 
 
 def get_git_head_or_branch():
@@ -81,6 +81,9 @@ def checkout_and_build(version):
     # Check out the ref for this version, skipping some files
     things_to_skip = [CONF_PY, VERSIONS_PY, "doc-builder"]
     for thing in things_to_skip:
+        # Error if doesn't exist
+        if not os.path.exists(thing):
+            raise FileNotFoundError(thing)
         # Error if it contains uncommitted changes
         cmd = f"git add . && git diff --quiet {thing} && git diff --cached --quiet {thing}"
         try:
