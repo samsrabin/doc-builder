@@ -27,13 +27,13 @@ sys.path.insert(0, os.getcwd())
 
 # Import our version definitions
 print(os.getcwd())
-from version_list import LATEST_REF, VERSION_LIST  # pylint: disable=wrong-import-position,import-error
+from source.version_list import LATEST_REF, VERSION_LIST  # pylint: disable=wrong-import-position,import-error
 
 
 # Path to certain important files
 # TODO: Make these cmd-line options
 CONF_PY = os.path.join("source", "conf.py")
-VERSIONS_PY = "version_list.py"
+VERSIONS_PY = os.path.join("source", "version_list.py")
 
 
 def get_git_head_or_branch():
