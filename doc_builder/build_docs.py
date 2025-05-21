@@ -209,11 +209,6 @@ def run_build_command(build_command, version, options):
     else:
         env["version_display_name"] = version
 
-    # Set variables for substitutions
-    env["release"] = version.release
-    env["version"] = version.version
-    env["version_label"] = version.version_label
-
     # Things to do/set based on whether including version dropdown
     if options.versions:
         env["version_dropdown"] = "True"

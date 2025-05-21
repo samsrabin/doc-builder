@@ -5,82 +5,11 @@
 # (last visited 2025-05-20)
 """
 
+import sys
 import os
 import shutil
 import subprocess
 from doc_builder.build_docs import main as build_docs
-
-
-class VersionInfo:
-    """
-    A class defining characteristics of a documentation version
-    """
-
-    # pylint: disable=too-few-public-methods
-    def __init__(
-        self,
-        *,
-        short_name,
-        display_name,
-        ref,
-        release,
-        version,
-        version_label,
-        landing_version=False,
-    ):
-
-        # The name of this version in file/URL paths
-        self.short_name = short_name
-
-        # What gets shown in the dropdown menu
-        self.display_name = display_name
-
-        # Whether this version should be the one on the landing page (i.e., default version)
-        self.landing_version = landing_version
-
-        # Branch, tag, or commit SHA
-        self.ref = ref
-
-        # Text for standard Sphinx substitution variable "release"
-        self.release = release
-
-        # Text for standard Sphinx substitution variable "version"
-        self.version = version
-
-        # Text for custom CTSM substitution variable "version_label"
-        self.version_label = version_label
-
-    def subdir(self):
-        """
-        Get the subdirectory under PUBLISH_DIR where this version's HTML will be moved
-        """
-        if self.landing_version:
-            return ""
-        return self.short_name
-
-
-# Define the versions we want to build.
-# short_name=None means that will be the landing version.
-LATEST_REF = "auto-version-publishing"
-VERSION_LIST = [
-    VersionInfo(
-        short_name="latest",
-        display_name="Latest development code",
-        landing_version=True,
-        ref=LATEST_REF,
-        release="CTSM master",
-        version="CTSM1",
-        version_label="the latest development code",
-    ),
-    VersionInfo(
-        short_name="release-clm5.0",
-        display_name="CLM5.0",
-        ref="release-clm5.0",
-        release="release-clm5.0",
-        version="CLM5.0",
-        version_label="CLM5.0 (CESM2.1)",
-    ),
-]
 
 # Where the docs should be moved after being built
 PUBLISH_DIR = "_publish"
@@ -92,15 +21,25 @@ BUILD_DIR = "_build"
 # TODO: Make this a required cmd-line argument
 SITE_ROOT = os.path.abspath(PUBLISH_DIR)
 
-# Change to the parent director of doc-builder
+# Change to the parent director of doc-builder and add to Python path
 os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.insert(0, os.getcwd())
 
-# Path to conf.py
-# TODO: Make this a cmd-line option
+# Import our version definitions
+print(os.getcwd())
+from version_list import LATEST_REF, VERSION_LIST  # pylint: disable=wrong-import-position,import-error
+
+
+# Path to certain important files
+# TODO: Make these cmd-line options
 CONF_PY = os.path.join("source", "conf.py")
+VERSIONS_PY = os.path.join("source", "version_list.py")
 
 
 def get_git_head_or_branch():
+    """
+    Get the name of the current branch. If detached HEAD, get current commit SHA.
+    """
     try:
         result = subprocess.run(
             ["git", "symbolic-ref", "--short", "-q", "HEAD"],
@@ -140,7 +79,7 @@ def checkout_and_build(version):
     orig_ref = get_git_head_or_branch()
 
     # Check out the ref for this version, skipping some files
-    things_to_skip = [CONF_PY, "doc-builder"]
+    things_to_skip = [CONF_PY, VERSIONS_PY, "doc-builder"]
     for thing in things_to_skip:
         # Error if it contains uncommitted changes
         cmd = f"git add . && git diff --quiet {thing} && git diff --cached --quiet {thing}"
