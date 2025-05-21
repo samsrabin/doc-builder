@@ -108,10 +108,11 @@ def checkout_and_build(version):
             raise RuntimeError(msg) from e
 
         # Stage it so it won't be modified during checkout
-        subprocess.check_output("git add " + thing, shell=True)
+        # subprocess.check_output("git add " + thing, shell=True)
 
     subprocess.check_output("git checkout " + version.ref, shell=True)
-    # subprocess.check_output(f"git checkout {LATEST_REF} -- {CONF_PY}", shell=True)
+    for thing in things_to_skip:
+        subprocess.check_output(f"git checkout {LATEST_REF} -- {thing}", shell=True)
 
     # Build the docs for this version
     build_args = [
