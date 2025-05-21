@@ -6,6 +6,7 @@
 """
 
 import os
+import shutil
 import subprocess
 from doc_builder.build_docs import main as build_docs
 
@@ -32,7 +33,7 @@ class VersionInfo:
 LATEST_REF = "auto-version-publishing"
 VERSION_LIST = [
     VersionInfo(
-        short_name=None, display_name="Latest development code", ref=LATEST_REF
+        short_name="latest", display_name="Latest development code", ref=LATEST_REF
     ),
     VersionInfo(
         short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
@@ -104,7 +105,7 @@ def checkout_and_build(version):
     # Build the docs for this version
     build_args = [
         "-r", BUILD_DIR,
-        "-v", str(version.short_name),
+        "-v", version.short_name,
         "--version-display-name", version.display_name,
         "--versions",
         "--site-root", os.path.abspath(SITE_ROOT),
@@ -130,12 +131,12 @@ def check_version_list():
     """
     Check version list for problems
     """
-    n_none = 0
-    for version in VERSION_LIST:
-        # Expect exactly one version with short_name=None
-        n_none += int(version.short_name is None)
-    if n_none != 1:
-        raise RuntimeError(f"Expected one version with short_name=None; found {n_none}")
+    # n_none = 0
+    # for version in VERSION_LIST:
+    #     # Expect exactly one version with short_name=None
+    #     n_none += int(version.short_name is None)
+    # if n_none != 1:
+    #     raise RuntimeError(f"Expected one version with short_name=None; found {n_none}")
 
 
 def main():
@@ -146,11 +147,10 @@ def main():
     # and looping over all values to call our build with version, language and its tag
     for version in VERSION_LIST:
         checkout_and_build(version)
-        # subdir = version.short_name if version.short_name else ""
-        # move_dir(
-        #     os.path.join(BUILD_DIR, "html"),
-        #     os.path.join(PUBLISH_DIR, subdir)
-        #     )
+        src = os.path.join(BUILD_DIR, "versions", version.short_name, "html")
+        # TODO: If default version, don't append version.short_name
+        dst = os.path.join(PUBLISH_DIR, version.short_name)
+        shutil.move(src, dst)
 
 
 if __name__ == "__main__":
