@@ -126,6 +126,10 @@ def checkout_and_build(version):
     print(" ".join(build_args))
     # build_docs(build_args)
     
+    if version.short_name != "latest":
+        winriewnr
+    
+    
     # Go back to original place
     subprocess.check_output("git checkout " + orig_ref, shell=True)
 
