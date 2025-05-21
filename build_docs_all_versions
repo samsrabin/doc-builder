@@ -98,9 +98,20 @@ def checkout_and_build(version):
     # Check out the ref for this version, skipping some files
     things_to_skip = [CONF_PY, "doc-builder"]
     for thing in things_to_skip:
+        # Error if it contains uncommitted changes
+        cmd = f"git add . && git diff --quiet {thing} && git diff --cached --quiet {thing}"
+        try:
+            subprocess.check_output(cmd, shell=True)
+        except subprocess.CalledProcessError as e:
+            subprocess.check_output("git reset", shell=True)  # Unstage files staged by `git add`
+            msg = f"Important file/submodule may contain uncommitted changes: '{thing}'"
+            raise RuntimeError(msg) from e
+
+        # Stage it so it won't be modified during checkout
         subprocess.check_output("git add " + thing, shell=True)
+
     subprocess.check_output("git checkout " + version.ref, shell=True)
-    subprocess.check_output(f"git checkout {LATEST_REF} -- {CONF_PY}", shell=True)
+    # subprocess.check_output(f"git checkout {LATEST_REF} -- {CONF_PY}", shell=True)
 
     # Build the docs for this version
     build_args = [
