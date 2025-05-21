@@ -7,6 +7,7 @@
 
 import os
 import subprocess
+from doc_builder.build_docs import main as build_docs
 
 class VersionInfo:
     """
@@ -28,40 +29,63 @@ class VersionInfo:
 
 # Define the versions we want to build.
 # short_name=None means that will be the landing version.
-MAKE IT SO THAT "LATEST" ALWAYS GETS COPIED TO TOP LEVEL LIKE HOW THOMAS HANDLED "MAIN"
 LATEST_REF = "master"
 VERSION_LIST = [
     VersionInfo(
         short_name=None, display_name="Latest development code", ref=LATEST_REF
     ),
-    VersionInfo(
-        short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
-    ),
+    # VersionInfo(
+    #     short_name="release-clm5.0", display_name="CLM5.0", ref="release-clm5.0"
+    # ),
 ]
 
+# Where the docs should be moved after being built
+PUBLISH_DIR = "_publish"
 
-def build_doc(version):
+# Where the docs should be built before being moved to PUBLISH_DIR
+BUILD_DIR = "_build"
+
+# URL or absolute file path that should contain the top-level index.html
+# TODO: Make this a required cmd-line argument
+SITE_ROOT = os.path.abspath(PUBLISH_DIR)
+
+# Change to the directory of this file
+os.chdir(os.path.dirname(__file__))
+
+# Path to conf.py (from this directory, if relative)
+# TODO: Make this a cmd-line option
+CONF_PY = os.path.join(os.pardir, "source", "conf.py")
+
+
+def checkout_and_build(version):
     """
     Check out docs for a version and build
     """
-    # Set this so that it can be accessed by conf.py
-    os.environ["current_version"] = version
+
+    # Check that conf.py exists
+    if not os.path.exists(CONF_PY):
+        raise FileNotFoundError(CONF_PY)
 
     # Check out the ref for this version, but keep conf.py as its latest version
     subprocess.check_output("git checkout " + version.ref, shell=True)
-    subprocess.check_output(f"git checkout {LATEST_REF} -- conf.py", shell=True)
+    subprocess.check_output(f"git checkout {LATEST_REF} -- {CONF_PY}", shell=True)
 
     # Build the docs for this version
-    subprocess.check_output("make html", shell=True)
+    build_args = [
+        "-b", BUILD_DIR,
+        "-v", version,
+        "--versions",
+        "--site-root", os.path.abspath(SITE_ROOT)
+    ]
+    build_docs(build_args)
 
 
-# a move dir method because we run multiple builds and bring the html folders to a
-# location which we then push to github pages
 def move_dir(src, dst):
     """
-
+    Move the built docs to publish directory
     """
-    subprocess.check_output(["mkdir", "-p", dst])
+    if not os.path.exists(dst):
+        os.makedirs(dst)
     subprocess.check_output("mv " + src + "* " + dst, shell=True)
 
 
@@ -82,14 +106,14 @@ def main():
     # Check version list for problems
     check_version_list()
 
-    # to separate a single local build from all builds we have a flag, see conf.py
-    os.environ["build_all_docs"] = str(True)
-    os.environ["pages_root"] = "https://samsrabin.github.io/docs-deploy-testing"
-
     # and looping over all values to call our build with version, language and its tag
     for version in VERSION_LIST:
-        build_doc(version)
-        move_dir("./_build/html/", "../pages/" + version + "/" + language + "/")
+        checkout_and_build(version)
+        subdir = version.short_name if version.short_name else ""
+        move_dir(
+            os.path.join(BUILD_DIR, "html"),
+            os.path.join(PUBLISH_DIR, subdir)
+            )
 
 
 if __name__ == "__main__":
